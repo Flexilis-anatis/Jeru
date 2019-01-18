@@ -52,7 +52,7 @@ Token make_signal(TokenID signal) {
 Token parse_word() {
     do
         advance();
-    while (!(isdigit(peek()) || isblank(peek())));
+    while (current() && !(isdigit(current()) || isblank(current())));
 
     switch (*scanner.start) {
         case '+':
