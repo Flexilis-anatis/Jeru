@@ -1,7 +1,8 @@
-#include "src/reverse_print.h"
+#include "src/jerutype.h"
 
 int main(void) {
-    reverse_print("!dlroW olleH");
+    JeruType *five = init_jeru_int(5);
+    print_jeru_type(five);
 
     return 0;
 }
