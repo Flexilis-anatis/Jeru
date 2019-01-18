@@ -7,21 +7,22 @@ JeruType *init_jeru_type(JeruTypeID id) {
     type->id = id;
     return type;
 }
+#define INIT_JERU(funcname, type, asname, typename) \
+    JeruType *init_jeru_##funcname(type value) { \
+        JeruType *jerutype = init_jeru_type(TYPE_##typename); \
+        jerutype->as.asname = value; \
+        return jerutype; \
+    }
 
-JeruType *init_jeru_int(long long value) {
-    JeruType *type = init_jeru_type(TYPE_INT);
-    type->as.integer = value;
-    return type;
-}
-
-JeruType *init_jeru_double(double value) {
-    JeruType *type = init_jeru_type(TYPE_DOUBLE);
-    type->as.floating = value;
-    return type;
-}
+INIT_JERU(double, double, floating, DOUBLE)
+INIT_JERU(int, long long, integer, INT)
+INIT_JERU(string, const char *, string, STRING)
+#undef INIT_JERU
 
 void free_jeru_type(JeruType *object) {
-    free(object); // going to get more extensive once I add more stuff
+    if (object->id == TYPE_STRING)
+        free(object->as.string);
+    free(object);
 }
 
 void print_jeru_type(JeruType *object) {
@@ -31,6 +32,9 @@ void print_jeru_type(JeruType *object) {
             break;
         case TYPE_INT:
             printf("%lld", object->as.integer);
+            break;
+        case TYPE_STRING:
+            printf("%s", object->as.string);
             break;
     }
 }

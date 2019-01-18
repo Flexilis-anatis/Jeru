@@ -1,6 +1,7 @@
 #include "lex.h"
 #include <stdbool.h>
 #include <ctype.h>
+#include <string.h>
 
 static Scanner scanner;
 
@@ -9,20 +10,8 @@ void set_source(const char *source) {
     scanner.line = 1;
 }
 
-char peek() {
-    return scanner.end[1];
-}
-
 void advance() {
     ++scanner.end;
-}
-
-bool match(char expected) {
-    if (peek() == expected) {
-        advance();
-        return true;
-    }
-    return false;
 }
 
 bool scanner_at_end() {
@@ -49,6 +38,16 @@ Token make_signal(TokenID signal) {
     return tok;
 }
 
+// Checks to see if a full string matches. Takes token_type to shorten
+// short-circuit returns. It returns TOK_WORDif not equal.
+TokenID matches(const char *string, unsigned int length, TokenID type) {
+    // Sees if the string matches what's in the scanner
+    if (scanner.end - scanner.start == 1 + length &&
+        memcmp(scanner.start + 1, string, length) == 0)
+        return type; // found
+    return TOK_WORD; // not found
+}
+
 Token parse_word() {
     do
         advance();
@@ -59,6 +58,8 @@ Token parse_word() {
             if (scanner.start+1 == scanner.end) // one char
                 return make_token(TOK_ADD);
             break;
+        case 'p':
+            return make_token(matches("rint", 4, TOK_PRINT));
     }
 
     return make_token(TOK_WORD);

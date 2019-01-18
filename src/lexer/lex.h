@@ -1,7 +1,11 @@
 #pragma once
 
 typedef enum {
-    TOK_INT, TOK_DOUBLE, TOK_ADD, TOK_WORD,
+    // Custom
+    TOK_INT, TOK_DOUBLE, TOK_WORD,
+    // Magic
+    TOK_ADD, TOK_PRINT,
+    // Signals
     SIG_EOF, SIG_ERR
 } TokenID;
 
