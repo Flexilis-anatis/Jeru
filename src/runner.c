@@ -30,6 +30,25 @@ IsFloat promote(JeruType *x, JeruType *y) {
     return IS_FLOAT;
 }
 
+#define NUMOP(floatcode, intcode, tofloat) \
+    { \
+        JeruType *y_ptr = pop(), *x_ptr = pop(); \
+        if (tofloat && y_ptr->id == TYPE_INT && x_ptr->id == TYPE_INT) { \
+            y_ptr->id = TYPE_DOUBLE; \
+            y_ptr->as.floating = (double)y_ptr->as.integer; \
+        } \
+        if (promote(x_ptr, y_ptr) == IS_FLOAT) { \
+            float x = x_ptr->as.floating, y = y_ptr->as.floating; \
+            floatcode \
+        } else { \
+            long long x = x_ptr->as.integer, y = y_ptr->as.integer; \
+            intcode \
+        } \
+        free_jeru_type(x_ptr); \
+        free_jeru_type(y_ptr); \
+        break; \
+    }
+
 bool run_next_instruct() {
     Token token = next_token();
     if (token.id == SIG_EOF) return false;
@@ -40,17 +59,14 @@ bool run_next_instruct() {
         case TOK_INT:
             push(init_jeru_int(strtoll(token.lexeme.string, NULL, 10)));
             break;
-        case TOK_ADD: {
-            JeruType *x = pop(), *y = pop();
-            if (promote(x, y) == IS_FLOAT) {
-                push(init_jeru_double(x->as.floating + y->as.floating));
-            } else {
-                push(init_jeru_int(x->as.integer + y->as.integer));
-            }
-            free_jeru_type(x);
-            free_jeru_type(y);
-            break;
-        }
+        case TOK_ADD: 
+            NUMOP(push(init_jeru_double(x + y));, push(init_jeru_int(x + y));, false)
+        case TOK_SUB: 
+            NUMOP(push(init_jeru_double(x - y));, push(init_jeru_int(x - y));, false)
+        case TOK_MUL: 
+            NUMOP(push(init_jeru_double(x * y));, push(init_jeru_int(x * y));, false)
+        case TOK_DIV: 
+            NUMOP(push(init_jeru_double(x / y));, push(init_jeru_int(x / y));, true)
 
         case TOK_PRINT:
             print_jeru_type(pop());

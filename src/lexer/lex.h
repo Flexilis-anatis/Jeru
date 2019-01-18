@@ -4,7 +4,7 @@ typedef enum {
     // Custom
     TOK_INT, TOK_DOUBLE, TOK_WORD,
     // Magic
-    TOK_ADD, TOK_PRINT,
+    TOK_ADD, TOK_SUB, TOK_MUL, TOK_DIV, TOK_PRINT,
     // Signals
     SIG_EOF, SIG_ERR
 } TokenID;

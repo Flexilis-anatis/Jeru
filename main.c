@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 int main(void) {
-    run("5 3.53 + print");
+    run("5 3 + 4 / print");
 
     return 0;
 }

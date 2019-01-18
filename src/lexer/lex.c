@@ -62,11 +62,22 @@ Token parse_word() {
         advance();
     while (current() && !(isdigit(current()) || isblank(current())));
 
-    switch (*scanner.start) {
-        case '+':
-            if (scanner.start+1 == scanner.end) // one char
+    // Parses 1 length keywords
+    if (scanner.end - scanner.start == 1) {
+        switch(*scanner.start) {
+            case '+':
                 return make_token(TOK_ADD);
-            break;
+            case '-':
+                return make_token(TOK_SUB);
+            case '*':
+                return make_token(TOK_MUL);
+            case '/':
+                return make_token(TOK_DIV);
+        }
+    }
+
+    // Parses 2+ length keywords
+    switch (*scanner.start) {
         case 'p':
             return make_token(matches("rint", 4, TOK_PRINT));
     }
