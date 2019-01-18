@@ -8,12 +8,4 @@ typedef struct {
     vcvec /* JeruType */ *stack;
 } VM;
 
-typedef struct {
-    TokenID opcode;
-    JeruType *jeru;
-} Instruct;
-
-Instruct next_instruct();
-void run_instruct();
-void free_instruct();
-void free_vm();
+void run(const char *source);

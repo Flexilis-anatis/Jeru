@@ -11,7 +11,7 @@ typedef enum {
 
 typedef struct {
     struct {
-        const char *start;
+        const char *string;
         unsigned long length;
     } lexeme;
 

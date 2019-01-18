@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdlib.h>
 
 static Scanner scanner;
 
@@ -25,8 +26,16 @@ char current() {
 Token make_token(TokenID id) {
     Token tok;
     tok.id = id;
-    tok.lexeme.start = scanner.start;
-    tok.lexeme.length = (scanner.end - scanner.start);
+
+    // Parsing out the string
+    char *string = malloc(scanner.end - scanner.start);
+    for (const char *cur = scanner.start; cur < scanner.end; ++cur)
+        string[cur - scanner.start] = scanner.start[cur - scanner.start];
+    string[scanner.end-scanner.start] = '\0';
+    // Yuck...
+    
+    tok.lexeme.string = string;
+    tok.lexeme.length = scanner.end-scanner.start;
     tok.line = scanner.line;
     scanner.start = scanner.end;
     return tok;

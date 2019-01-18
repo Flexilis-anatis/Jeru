@@ -308,6 +308,14 @@ bool vcvec_pop_back(vcvec* vector) {
   return true;
 }
 
+void *vcvec_pop(vcvec *vector) {
+  void *item = vcvec_end(vector) - vector->element_size;
+  void *new_item = malloc(vector->element_size);
+  memcpy(new_item, item, vector->element_size);
+  vcvec_pop_back(vector);
+  return new_item; 
+}
+
 bool vcvec_replace(vcvec* vector, size_t index, const void* value) {
   if (vector->deleter != NULL) {
     vector->deleter(vcvec_at(vector, index));

@@ -16,7 +16,7 @@ JeruType *init_jeru_type(JeruTypeID id) {
 
 INIT_JERU(double, double, floating, DOUBLE)
 INIT_JERU(int, long long, integer, INT)
-INIT_JERU(string, const char *, string, STRING)
+INIT_JERU(string, char *, string, STRING)
 #undef INIT_JERU
 
 void free_jeru_type(JeruType *object) {
