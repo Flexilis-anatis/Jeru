@@ -20,6 +20,10 @@ JeruType *init_jeru_double(double value) {
     return type;
 }
 
+void free_jeru_type(JeruType *object) {
+    free(object); // going to get more extensive once I add more stuff
+}
+
 void print_jeru_type(JeruType *object) {
     switch (object->id) {
         case TYPE_DOUBLE:
