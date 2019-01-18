@@ -1,7 +1,7 @@
 #include "runner.h"
 #include <stdlib.h>
 
-static VM main_vm;
+VM main_vm;
 
 void init_vm() {
     main_vm.stack = vcvec_create(0, sizeof(JeruType), NULL);

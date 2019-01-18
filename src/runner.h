@@ -9,3 +9,5 @@ typedef struct {
 } VM;
 
 void run(const char *source);
+void init_vm(void);
+bool run_next_instruct(void);

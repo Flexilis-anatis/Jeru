@@ -25,4 +25,4 @@ typedef struct {
 } Scanner;
 
 void set_source(const char *source);
-Token next_token();
+Token next_token(void);
