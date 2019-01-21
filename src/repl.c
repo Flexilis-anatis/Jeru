@@ -21,44 +21,43 @@ void run_repl() {
 
         input = readline("\n>>> ");
 
-        add_history(input);
-        set_source(input);
-
         JeruType *stack_copy = NULL;
-        size_t size = main_vm.stack ? sizeof(size_t)*2 + vector_get_size(main_vm.stack) * sizeof(JeruType) : 0;
+        size_t size = 0;
         if (main_vm.stack) {
-            printf("Orig size: %li\n", vector_get_size(main_vm.stack));
+            size = vector_size(main_vm.stack) * sizeof(JeruType) + sizeof(size_t) * 2;
             stack_copy = malloc(size);
             memcpy(stack_copy, &vector_get_size(main_vm.stack), size);
-            printf("New size: %li\n", *(size_t *)stack_copy);
+            stack_copy = &stack_copy[1];
         }
+
+        add_history(input);
+        set_source(input);
 
         while (run_token(next_token()));
 
         if (main_vm.error.exists) {
             printf("[line %li] Error: %s\n", main_vm.error.line, main_vm.error.message);
-            if (main_vm.stack)
-                vector_free(main_vm.stack);
+
+            vector_free(main_vm.stack);
             if (stack_copy) {
-                printf("Allocating...");
-                ((size_t *)main_vm.stack)[-2] = malloc(size);
-                printf("Copying...\n");
-                memcpy(((size_t *)main_vm.stack)[-2], stack_copy, size);
-                printf("Newer size: %li\n", vector_get_size(main_vm.stack));
-                //vector_free(&stack_copy[2]);
+                main_vm.stack = malloc(size);
+                memcpy(main_vm.stack, &vector_get_size(stack_copy), size);
+                main_vm.stack = &main_vm.stack[1];
+                vector_free(stack_copy);
             } else {
                 main_vm.stack = NULL;
             }
             continue;
-        } else if (stack_copy) {
-            //vector_free(stack_copy);
+        } else {
+            vector_free(stack_copy);
         }
 
         printf("\n[");
-        for (size_t i = 0; i < vector_get_size(main_vm.stack); ++i) {
+        for (size_t i = 0; i+1 < vector_size(main_vm.stack); ++i) {
             print_jeru_type(&main_vm.stack[i]);
-            putchar(',');
+            printf(", ");
         }
+        print_jeru_type(&main_vm.stack[vector_size(main_vm.stack)-1]);
         putchar(']');
     }
 }
