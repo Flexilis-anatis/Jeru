@@ -85,7 +85,6 @@ bool run_token(Token token) {
     switch (token.id) {
         case TOK_DOUBLE:
             push(init_jeru_double(strtod(token.lexeme.string, NULL)));
-            RAISE("double found", 12)
             break;
         case TOK_INT:
             push(init_jeru_int(strtoll(token.lexeme.string, NULL, 10)));
