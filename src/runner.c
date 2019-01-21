@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 VM main_vm;
+VMError vm_error;
 
 void init_vm() {
     main_vm.stack = vcvec_create(0, sizeof(JeruType), NULL);
@@ -17,13 +18,13 @@ JeruType *pop() {
 }
 
 void push(JeruType object) {
-    vcvec_push_back(main_vm.stack, &object);
+    vcvec_push_back(main_vm.stack, &object); // just memcpy's, so it's fine to use a local ref
 }
 
 void forget_last(JeruType *copy) {
     if (copy != NULL)
         free_jeru_type(copy);
-    main_vm.stack->count--;
+    --main_vm.stack->count;
 }
 
 typedef enum {NOT_FLOAT, IS_FLOAT} IsFloat;

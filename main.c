@@ -1,7 +1,7 @@
 #include "src/runner.h"
 
 int main(void) {
-    run("5 3 + print");
+    run_repl();
 
     return 0;
 }

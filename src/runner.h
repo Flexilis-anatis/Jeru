@@ -8,6 +8,12 @@ typedef struct {
     vcvec /* JeruType */ *stack;
 } VM;
 
+typedef struct {
+    bool is_error;
+    unsigned long line;
+    const char *message;
+} VMError;
+
 void run(const char *source);
 void init_vm(void);
 void free_vm(void);
