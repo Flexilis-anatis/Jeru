@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdarg.h>
 #define LOGARITHMIC_GROWTH
 #include "../vector/vector.h"
 
@@ -49,8 +50,27 @@ IsFloat promote(JeruType *x, JeruType *y) {
     return IS_FLOAT;
 }
 
-#define NUMOP(floatcode, intcode, tofloat) \
+#define RAISE_BOILER \
+    main_vm.error.line = token.line; \
+    main_vm.error.exists = true; \
+    free(token.lexeme.string); \
+    return false;
+
+
+#define STACK_REQUIRE(op, req_length, ...) \
+    do { \
+        if (vector_size(main_vm.stack) < req_length) \
+            main_vm.error.message = "Not enough space on stack for " op; \
+        else if (!stack_ok(req_length, __VA_ARGS__)) \
+            main_vm.error.message = "Datatypes on stack incorrect for " op; \
+        else \
+            break; \
+        RAISE_BOILER \
+    } while (0)
+
+#define NUMOP(name, floatcode, intcode, tofloat) \
     { \
+        STACK_REQUIRE(name, 2, TYPE_NUM, TYPE_NUM); \
         JeruType *y_ptr = pop(), \
                  *x_ptr = pop(); \
         if (tofloat && y_ptr->id == TYPE_INT && x_ptr->id == TYPE_INT) { \
@@ -69,13 +89,42 @@ IsFloat promote(JeruType *x, JeruType *y) {
         break; \
     }
 
-#define RAISE(string_, stringlen) \
-    main_vm.error.message = malloc(stringlen); \
-    main_vm.error.message = string_; \
-    main_vm.error.line = token.line; \
-    main_vm.error.exists = true; \
-    free(token.lexeme.string); \
-    return false;
+/* Given size and list of wanted datatypes, return true if the stack matches the list.
+ * OR types together to get mixes, e.g. TYPE_DOUBLE|TYPE_INT will match both.
+ *
+ * Predefined mixes:
+ * TYPE_VAL = all values (int, string, etc.)
+ * TYPE_NUM = TYPE_DOUBLE|TYPE_INT
+ * TYPE_ALL = anything
+ */
+#define backwards_index(vector, index) ((vector)[vector_size(vector)-index-1])
+bool stack_ok(size_t req_length, ...) {
+    if (vector_size(main_vm.stack) < req_length || req_length == 0)
+        return false;
+
+    va_list args;
+    va_start(args, req_length);
+
+    // Really ugly. Iterates backwards a lot
+    for (size_t i = req_length; i-- > 0;) {
+        JeruTypeID req_id = va_arg(args, JeruTypeID);
+
+        bool is_good = false;
+        for (size_t type = 1; type < TYPE_END; type <<= 1) {
+            if ((type & req_id) == 0)
+                continue;
+            if ((backwards_index(main_vm.stack, i).id & type) == type) {
+                is_good = true;
+                break;
+            }
+        }
+        if (!is_good)
+            return false;
+    }
+
+    va_end(args);
+    return true;
+}
 
 
 bool run_token(Token token) {
@@ -85,21 +134,22 @@ bool run_token(Token token) {
     switch (token.id) {
         case TOK_DOUBLE:
             push(init_jeru_double(strtod(token.lexeme.string, NULL)));
-            RAISE("double found", 12)
             break;
         case TOK_INT:
             push(init_jeru_int(strtoll(token.lexeme.string, NULL, 10)));
             break;
+            
         case TOK_ADD: 
-            NUMOP(push(init_jeru_double(x + y));, push(init_jeru_int(x + y));, false)
+            NUMOP("addition", push(init_jeru_double(x + y));, push(init_jeru_int(x + y));, false)
         case TOK_SUB: 
-            NUMOP(push(init_jeru_double(x - y));, push(init_jeru_int(x - y));, false)
+            NUMOP("subtraction", push(init_jeru_double(x - y));, push(init_jeru_int(x - y));, false)
         case TOK_MUL: 
-            NUMOP(push(init_jeru_double(x * y));, push(init_jeru_int(x * y));, false)
-        case TOK_DIV: 
-            NUMOP(push(init_jeru_double(x / y));, push(init_jeru_int(x / y));, true)
+            NUMOP("multiplication", push(init_jeru_double(x * y));, push(init_jeru_int(x * y));, false)
+        case TOK_DIV:
+            NUMOP("division", push(init_jeru_double(x / y));, push(init_jeru_int(x / y));, true)
 
         case TOK_PRINT: {
+            STACK_REQUIRE("printing", 1, TYPE_VAL);
             JeruType *value = pop();
             print_jeru_type(value);
             free_jeru_type(value);

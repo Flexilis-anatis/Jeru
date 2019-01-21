@@ -24,10 +24,9 @@ void run_repl() {
         JeruType *stack_copy = NULL;
         size_t size = 0;
         if (main_vm.stack) {
-            size = vector_size(main_vm.stack) * sizeof(JeruType) + sizeof(size_t) * 2;
+            size = (vector_size(main_vm.stack) * sizeof(JeruType)) + (sizeof(size_t) * 2);
             stack_copy = malloc(size);
             memcpy(stack_copy, &vector_get_size(main_vm.stack), size);
-            stack_copy = &stack_copy[1];
         }
 
         add_history(input);
@@ -41,15 +40,18 @@ void run_repl() {
             vector_free(main_vm.stack);
             if (stack_copy) {
                 main_vm.stack = malloc(size);
-                memcpy(main_vm.stack, &vector_get_size(stack_copy), size);
-                main_vm.stack = &main_vm.stack[1];
-                vector_free(stack_copy);
+                memcpy(main_vm.stack, stack_copy, size);
+                // Haha... sinces the size and reserved size are stored in stack[-1] and [-2] as
+                // size_t's, I have to cast it to size_t *, get the value that will become [0], 
+                // then cast it back to a JeruType *
+                main_vm.stack = (JeruType *)&((size_t *)main_vm.stack)[2];
+                vector_free((JeruType *)&((size_t *)stack_copy)[2]);
             } else {
                 main_vm.stack = NULL;
             }
             continue;
         } else {
-            vector_free(stack_copy);
+            vector_free(&stack_copy[1]);
         }
 
         printf("\n[");
@@ -57,7 +59,12 @@ void run_repl() {
             print_jeru_type(&main_vm.stack[i]);
             printf(", ");
         }
-        print_jeru_type(&main_vm.stack[vector_size(main_vm.stack)-1]);
+        // Print last value if there is one
+        if (vector_size(main_vm.stack))
+            print_jeru_type(&main_vm.stack[vector_size(main_vm.stack)-1]);
+
         putchar(']');
     }
+
+    free_vm();
 }
