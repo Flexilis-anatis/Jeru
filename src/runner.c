@@ -82,7 +82,7 @@ bool run_token(Token token) {
         case TOK_PRINT: {
             JeruType *value = pop();
             print_jeru_type(value);
-            forget_last(value);
+            free_jeru_type(value);
             break;
         }
     }
