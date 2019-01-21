@@ -2,15 +2,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-JeruType *init_jeru_type(JeruTypeID id) {
-    JeruType *type = malloc(sizeof type);
-    type->id = id;
+JeruType init_jeru_type(JeruTypeID id) {
+    JeruType type;
+    type.id = id;
     return type;
 }
 #define INIT_JERU(funcname, type, asname, typename) \
-    JeruType *init_jeru_##funcname(type value) { \
-        JeruType *jerutype = init_jeru_type(TYPE_##typename); \
-        jerutype->as.asname = value; \
+    JeruType init_jeru_##funcname(type value) { \
+        JeruType jerutype = init_jeru_type(TYPE_##typename); \
+        jerutype.as.asname = value; \
         return jerutype; \
     }
 

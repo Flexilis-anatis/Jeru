@@ -9,8 +9,17 @@
         (void *)name != vcvec_end(vector); \
         name = (type *)vcvec_next(vector, (void *)name))
 
-typedef struct vcvec vcvec;
 typedef void (vcvec_deleter)(void *);
+
+struct vcvec {
+  size_t count;
+  size_t element_size;
+  size_t reserved_size;
+  char* data;
+  vcvec_deleter* deleter;
+};
+
+typedef struct vcvec vcvec;
 
 // ----------------------------------------------------------------------------
 // Control
@@ -116,8 +125,7 @@ bool vcvec_push_back(vcvec* vector, const void* value);
 // Removes the last item in the vector.
 bool vcvec_pop_back(vcvec* vector);
 
-// Like vcvec_pop_back but returns a copy of the last value
-void *vcvec_pop(vcvec* vector);
+void *vcvec_copy_item(vcvec* vector, unsigned int index);
 
 // Replace value by index in the vector.
 bool vcvec_replace(vcvec* vector, size_t index, const void* value);

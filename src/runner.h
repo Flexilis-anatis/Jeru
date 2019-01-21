@@ -10,4 +10,5 @@ typedef struct {
 
 void run(const char *source);
 void init_vm(void);
-bool run_next_instruct(void);
+void free_vm(void);
+bool run_token(Token token);

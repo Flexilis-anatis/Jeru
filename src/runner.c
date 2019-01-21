@@ -7,12 +7,23 @@ void init_vm() {
     main_vm.stack = vcvec_create(0, sizeof(JeruType), NULL);
 }
 
-JeruType *pop() {
-    return (JeruType *)vcvec_pop(main_vm.stack);
+void free_vm() {
+    free(main_vm.stack->data);
+    free(main_vm.stack);
 }
 
-void push(JeruType *object) {
-    vcvec_push_back(main_vm.stack, object);
+JeruType *pop() {
+    return vcvec_copy_item(main_vm.stack, --main_vm.stack->count);
+}
+
+void push(JeruType object) {
+    vcvec_push_back(main_vm.stack, &object);
+}
+
+void forget_last(JeruType *copy) {
+    if (copy != NULL)
+        free_jeru_type(copy);
+    main_vm.stack->count--;
 }
 
 typedef enum {NOT_FLOAT, IS_FLOAT} IsFloat;
@@ -32,7 +43,8 @@ IsFloat promote(JeruType *x, JeruType *y) {
 
 #define NUMOP(floatcode, intcode, tofloat) \
     { \
-        JeruType *y_ptr = pop(), *x_ptr = pop(); \
+        JeruType *y_ptr = pop();\
+         JeruType *x_ptr = pop(); \
         if (tofloat && y_ptr->id == TYPE_INT && x_ptr->id == TYPE_INT) { \
             y_ptr->id = TYPE_DOUBLE; \
             y_ptr->as.floating = (double)y_ptr->as.integer; \
@@ -49,8 +61,7 @@ IsFloat promote(JeruType *x, JeruType *y) {
         break; \
     }
 
-bool run_next_instruct() {
-    Token token = next_token();
+bool run_token(Token token) {
     if (token.id == SIG_EOF) return false;
     switch (token.id) {
         case TOK_DOUBLE:
@@ -68,16 +79,22 @@ bool run_next_instruct() {
         case TOK_DIV: 
             NUMOP(push(init_jeru_double(x / y));, push(init_jeru_int(x / y));, true)
 
-        case TOK_PRINT:
-            print_jeru_type(pop());
+        case TOK_PRINT: {
+            JeruType *value = pop();
+            print_jeru_type(value);
+            forget_last(value);
             break;
+        }
     }
+
+    free(token.lexeme.string);
     return true;
 }
 
 void run(const char *source) {
     init_vm();
     set_source(source);
-    while (run_next_instruct());
+    while (run_token(next_token()));
+    free_vm();
 }
 

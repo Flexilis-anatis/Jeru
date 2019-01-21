@@ -28,7 +28,7 @@ Token make_token(TokenID id) {
     tok.id = id;
 
     // Parsing out the string
-    char *string = malloc(scanner.end - scanner.start);
+    char *string = malloc(scanner.end - scanner.start + 1);
     for (const char *cur = scanner.start; cur < scanner.end; ++cur)
         string[cur - scanner.start] = scanner.start[cur - scanner.start];
     string[scanner.end-scanner.start] = '\0';

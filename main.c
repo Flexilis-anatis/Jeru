@@ -1,7 +1,7 @@
-#include "src/repl.h"
+#include "src/runner.h"
 
 int main(void) {
-    run_repl();
+    run("5 3 + print");
 
     return 0;
 }

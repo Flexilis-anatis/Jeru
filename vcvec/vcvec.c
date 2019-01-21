@@ -6,20 +6,6 @@
 #define DEFAULT_COUNT_OF_ELEMENETS 8
 #define MINIMUM_COUNT_OF_ELEMENTS 2
 
-// ----------------------------------------------------------------------------
-
-// vcvec structure
-
-struct vcvec {
-  size_t count;
-  size_t element_size;
-  size_t reserved_size;
-  char* data;
-  vcvec_deleter* deleter;
-};
-
-// ----------------------------------------------------------------------------
-
 // auxillary methods
 
 bool vcvec_realloc(vcvec* vector, size_t new_count) {
@@ -308,11 +294,9 @@ bool vcvec_pop_back(vcvec* vector) {
   return true;
 }
 
-void *vcvec_pop(vcvec *vector) {
-  void *item = vcvec_end(vector) - vector->element_size;
+void *vcvec_copy_item(vcvec *vector, unsigned int index) {
   void *new_item = malloc(vector->element_size);
-  memcpy(new_item, item, vector->element_size);
-  vcvec_pop_back(vector);
+  memcpy(new_item, vcvec_at(vector, index), vector->element_size);
   return new_item; 
 }
 

@@ -16,7 +16,7 @@ void run_repl() {
             continue;
 
         set_source(input);
-        while (run_next_instruct());
+        while (run_token(next_token()));
         add_history(input);
 
         printf("\n[");
