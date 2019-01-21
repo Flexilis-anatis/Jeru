@@ -103,14 +103,14 @@ Token parse_number() {
 }
 
 Token next_token() {
-    if (scanner_at_end())
-        return make_signal(SIG_EOF);
-
     while (isblank(current())) {
         if (*scanner.start == '\n')
             ++scanner.line;
         scanner.start = ++scanner.end;
     }
+
+    if (scanner_at_end())
+        return make_signal(SIG_EOF);
 
     if (isdigit(current()) || current() == '.') {
         return parse_number();
