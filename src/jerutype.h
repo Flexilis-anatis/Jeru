@@ -1,7 +1,12 @@
 #pragma once
 
 typedef enum {
-    TYPE_INT, TYPE_DOUBLE, TYPE_STRING
+    TYPE_INT    = 1 << 0, // 001
+    TYPE_DOUBLE = 1 << 1, // 010
+    TYPE_STRING = 1 << 2, // 100
+
+    TYPE_NUM = TYPE_INT|TYPE_DOUBLE, // 011
+    TYPE_VAL = TYPE_NUM|TYPE_STRING  // 111
 } JeruTypeID;
 
 typedef struct {

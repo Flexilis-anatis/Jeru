@@ -1,4 +1,4 @@
-#include "src/runner.h"
+#include "src/repl.h"
 
 int main(void) {
     run_repl();

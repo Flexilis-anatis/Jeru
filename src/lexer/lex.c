@@ -106,8 +106,11 @@ Token next_token() {
     if (scanner_at_end())
         return make_signal(SIG_EOF);
 
-    while (isblank(current()))
+    while (isblank(current())) {
+        if (*scanner.start == '\n')
+            ++scanner.line;
         scanner.start = ++scanner.end;
+    }
 
     if (isdigit(current()) || current() == '.') {
         return parse_number();

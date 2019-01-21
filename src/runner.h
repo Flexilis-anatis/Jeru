@@ -1,18 +1,16 @@
 #pragma once
-#include "../vcvec/vcvec.h"
 #include "jerutype.h"
 #include "lexer/lex.h"
+#include <stdbool.h>
 
-// Going to store word hashmap here when I'm done
 typedef struct {
-    vcvec /* JeruType */ *stack;
+    JeruType *stack;
+    struct {
+        bool exists;
+        unsigned long line;
+        const char *message;
+    } error;
 } VM;
-
-typedef struct {
-    bool is_error;
-    unsigned long line;
-    const char *message;
-} VMError;
 
 void run(const char *source);
 void init_vm(void);
