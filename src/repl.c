@@ -35,7 +35,7 @@ void run_repl() {
         add_history(input);
         set_source(input);
 
-        while (run_token(next_token()));
+        while (run_token(next_token(), NULL));
 
         if (main_vm.error.exists) {
             printf("[line %li] Error: %s\n", main_vm.error.line, main_vm.error.message);

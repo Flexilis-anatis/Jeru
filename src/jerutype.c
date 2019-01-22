@@ -1,4 +1,5 @@
 #include "jerutype.h"
+#include "../vector/vector.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -19,9 +20,18 @@ INIT_JERU(int, long long, integer, INT)
 INIT_JERU(string, char *, string, STRING)
 #undef INIT_JERU
 
+JeruType init_jeru_block(Token *tokens) {
+    JeruType jerutype = init_jeru_type(TYPE_BLOCK);
+    jerutype.as.block.tokens = tokens;
+    jerutype.as.block.instruction = 0;
+    return jerutype;
+}
+
 void free_jeru_type(JeruType *object) {
     if (object->id == TYPE_STRING)
         free(object->as.string);
+    else if (object->id == TYPE_BLOCK)
+        vector_free(object->as.block.tokens);
     free(object);
 }
 
@@ -35,6 +45,9 @@ void print_jeru_type(JeruType *object) {
             break;
         case TYPE_STRING:
             printf("%s", object->as.string);
+            break;
+        case TYPE_BLOCK:
+            printf("{...}");
             break;
     }
 }

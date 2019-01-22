@@ -35,6 +35,25 @@ void push(JeruType object) {
     vector_push_back(main_vm.stack, object);
 }
 
+JeruType parse_block(JeruType *parent_block) {
+    unsigned long nest_level = 1;
+    Token token, *block = NULL;
+    while (nest_level > 0) {
+        if (parent_block)
+            token = parent_block->as.block.tokens[parent_block->as.block.instruction++];
+        else
+            token = next_token();
+
+        if (token.id == TOK_BLOCK_START)
+            ++nest_level;
+        else if (token.id == TOK_BLOCK_END)
+            --nest_level;
+
+        vector_push_back(block, token);
+    }
+    return init_jeru_block(block);
+}
+
 typedef enum {NOT_FLOAT, IS_FLOAT} IsFloat;
 IsFloat promote(JeruType *x, JeruType *y) {
     if (x->id == TYPE_INT && y->id == TYPE_INT) {
@@ -126,8 +145,7 @@ bool stack_ok(size_t req_length, ...) {
     return true;
 }
 
-
-bool run_token(Token token) {
+bool run_token(Token token, JeruType *parent_block) {
     if (token.id == SIG_EOF)
         return main_vm.error.exists = false;
 
@@ -155,6 +173,22 @@ bool run_token(Token token) {
             free_jeru_type(value);
             break;
         }
+
+        case TOK_BLOCK_START:
+            push(parse_block(parent_block));
+            break;
+
+        case TOK_EXEC:
+            STACK_REQUIRE("executing", 1, TYPE_BLOCK);
+            JeruType *block = pop();
+            while(block->as.block.instruction < vector_size(block->as.block.tokens)) {
+                if (!run_token(block->as.block.tokens[block->as.block.instruction++], block)) {
+                    free_jeru_type(block);
+                    return false;
+                }
+            }
+            free_jeru_type(block);
+            break;
     }
 
     free(token.lexeme.string);
@@ -164,7 +198,7 @@ bool run_token(Token token) {
 void run(const char *source) {
     init_vm();
     set_source(source);
-    while (run_token(next_token()));
+    while (run_token(next_token(), NULL));
     if (main_vm.error.exists)
         printf("[line %li] Error: %s\n", main_vm.error.line, main_vm.error.message);
     

@@ -15,4 +15,4 @@ typedef struct {
 void run(const char *source);
 void init_vm(void);
 void free_vm(void);
-bool run_token(Token token);
+bool run_token(Token token, JeruType *parent_block);

@@ -73,6 +73,10 @@ Token parse_word() {
                 return make_token(TOK_MUL);
             case '/':
                 return make_token(TOK_DIV);
+            case '[':
+                return make_token(TOK_BLOCK_START);
+            case ']':
+                return make_token(TOK_BLOCK_END);
         }
     }
 
@@ -80,6 +84,8 @@ Token parse_word() {
     switch (*scanner.start) {
         case 'p':
             return make_token(matches("rint", 4, TOK_PRINT));
+        case 'e':
+            return make_token(matches("xec", 3, TOK_EXEC));
     }
 
     return make_token(TOK_WORD);
