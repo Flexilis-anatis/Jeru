@@ -4,7 +4,10 @@
 #include <stdlib.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#define LOGARITHMIC_GROWTH
 #include "../vector/vector.h"
+
+#include <assert.h>
 
 extern VM main_vm;
 
@@ -24,7 +27,7 @@ void run_repl() {
         JeruType *stack_copy = NULL;
         size_t size = 0;
         if (main_vm.stack) {
-            size = (vector_size(main_vm.stack) * sizeof(JeruType)) + (sizeof(size_t) * 2);
+            size = (vector_capacity(main_vm.stack) * sizeof(JeruType)) + (sizeof(size_t) * 2);
             stack_copy = malloc(size);
             memcpy(stack_copy, &vector_get_size(main_vm.stack), size);
         }
@@ -44,14 +47,15 @@ void run_repl() {
                 // Haha... sinces the size and reserved size are stored in stack[-1] and [-2] as
                 // size_t's, I have to cast it to size_t *, get the value that will become [0], 
                 // then cast it back to a JeruType *
-                main_vm.stack = (JeruType *)&((size_t *)main_vm.stack)[2];
-                vector_free((JeruType *)&((size_t *)stack_copy)[2]);
+                main_vm.stack = (JeruType *)&(((size_t *)main_vm.stack)[2]);
+
+                free(stack_copy);
             } else {
                 main_vm.stack = NULL;
             }
             continue;
         } else {
-            vector_free(&stack_copy[1]);
+            free(stack_copy);
         }
 
         printf("\n[");
