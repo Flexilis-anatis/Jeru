@@ -29,7 +29,7 @@ void run_repl() {
         if (main_vm.stack) {
             size = (vector_capacity(main_vm.stack) * sizeof(JeruType)) + (sizeof(size_t) * 2);
             stack_copy = malloc(size);
-            memcpy(stack_copy, &vector_get_size(main_vm.stack), size);
+            memcpy(stack_copy, &((size_t *)main_vm.stack)[-2], size);
         }
 
         add_history(input);

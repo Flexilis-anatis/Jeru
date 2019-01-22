@@ -16,10 +16,16 @@ void free_vm() {
     vector_free(main_vm.stack);
 }
 
+void forget_last(JeruType *copy) {
+    if (copy != NULL)
+        free_jeru_type(copy);
+    vector_set_size(main_vm.stack, vector_size(main_vm.stack) - 1);
+}
+
 JeruType *pop() {
     if (main_vm.stack == NULL)
         return NULL;
-    vector_change_size(main_vm.stack, -1);
+    forget_last(NULL);
     JeruType *copy = malloc(sizeof(JeruType));
     memcpy(copy, vector_end(main_vm.stack), sizeof(JeruType));
     return copy;
@@ -27,12 +33,6 @@ JeruType *pop() {
 
 void push(JeruType object) {
     vector_push_back(main_vm.stack, object);
-}
-
-void forget_last(JeruType *copy) {
-    if (copy != NULL)
-        free_jeru_type(copy);
-    vector_change_size(main_vm.stack, -1);
 }
 
 typedef enum {NOT_FLOAT, IS_FLOAT} IsFloat;

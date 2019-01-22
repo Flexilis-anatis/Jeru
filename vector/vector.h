@@ -32,16 +32,6 @@ do {                                    \
 	}                                   \
 } while(0)
 
-#define vector_change_size(vec, off)	\
-do {									\
-	if (vec) { 							\
-		((size_t *)(vec))[-2] += (off); \
-	} 									\
-} while(0)
-
-#define vector_get_size(vec)			\
-	(((size_t *)(vec))[-2])
-
 /**
  * @brief vector_capacity - gets the current capacity of the vector
  * @param vec - the vector
@@ -159,18 +149,11 @@ do { \
 
 #define vector_push_back(vec, value) \
 do {                                                        \
-	printf("Getting capacity\n"); 							\
 	size_t __cap = vector_capacity(vec);                    \
-	printf("Checking size\n"); 								\
 	if(__cap <= vector_size(vec)) {                         \
-		printf("Reallocating\n");							\
 		vector_grow((vec), !__cap ? __cap + 1 : __cap * 2); \
 	}                                                       \
-	printf("Prev: ");										\
-	print_jeru_type(&vec[vector_size(vec)-1]);				\
-	printf("\nNew size: %lu\n", vector_size(vec));			\
 	vec[vector_size(vec)] = (value);                        \
-	printf("Increasing size\n");							\
 	vector_set_size((vec), vector_size(vec) + 1);           \
 } while(0)
 
