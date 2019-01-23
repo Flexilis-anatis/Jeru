@@ -7,8 +7,12 @@ A toy language I'm making. Here's an example of a fibbonacci calculator! (discla
 [
     [
         copy 1 - fibo *
-    ] 1 < if
+    ] 2 < if
 ] word (int) fibo
+```
+Alt. without newlines:
+```
+[ [ copy 1 - fibo * ] 2 < if ] word (int) fibo
 ```
 If you called this word with `3 fibo` the stack would progress as follows:
 ```
@@ -20,4 +24,13 @@ If you called this word with `3 fibo` the stack would progress as follows:
 [3, 2, 1] # multiplies 2*1
 [3, 2] # multiplies 3*2
 [6] # result!
+```
+
+This is approx. equivilent to the following python code:
+
+```
+def fibo(n: int):
+    if n < 2: # or n <= 1
+        return 1
+    return fibo(n-1) * n
 ```
