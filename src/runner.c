@@ -107,6 +107,18 @@ IsFloat promote(JeruType *x, JeruType *y) {
         free_jeru_type(y_ptr); \
         break; \
     }
+#define GENNUMOP(name, code, tofloat) \
+    NUMOP(name, code, code, tofloat)
+
+bool jeru_exec(JeruType *block) {
+    while(block->as.block.instruction < vector_size(block->as.block.tokens)) {
+        if (!run_token(block->as.block.tokens[block->as.block.instruction++], block)) {
+            free_jeru_type(block);
+            return false;
+        }
+    }
+    return true;
+}
 
 /* Given size and list of wanted datatypes, return true if the stack matches the list.
  * OR types together to get mixes, e.g. TYPE_DOUBLE|TYPE_INT will match both.
@@ -160,13 +172,27 @@ bool run_token(Token token, JeruType *parent_block) {
             break;
             
         case TOK_ADD: 
-            NUMOP("addition", push(init_jeru_double(x + y));, push(init_jeru_int(x + y));, false)
+            GENNUMOP("addition", push(init_jeru_int(x + y));, false)
         case TOK_SUB: 
-            NUMOP("subtraction", push(init_jeru_double(x - y));, push(init_jeru_int(x - y));, false)
-        case TOK_MUL: 
-            NUMOP("multiplication", push(init_jeru_double(x * y));, push(init_jeru_int(x * y));, false)
+            GENNUMOP("subtraction", push(init_jeru_int(x - y));, false)
+        case TOK_MUL:
+            GENNUMOP("multiplication", push(init_jeru_int(x * y));, false)
         case TOK_DIV:
-            NUMOP("division", push(init_jeru_double(x / y));, push(init_jeru_int(x / y));, true)
+            GENNUMOP("division", push(init_jeru_int(x / y));, true)
+        case TOK_GT:
+            GENNUMOP("greater than", {
+                if (x > y)
+                    push(init_jeru_int(1));
+                else
+                    push(init_jeru_int(0));
+            }, false)
+        case TOK_LT:
+            GENNUMOP("greater than", {
+                if (x < y)
+                    push(init_jeru_int(1));
+                else
+                    push(init_jeru_int(0));
+            }, false)
 
         case TOK_PRINT: {
             STACK_REQUIRE("printing", 1, TYPE_VAL);
@@ -180,17 +206,14 @@ bool run_token(Token token, JeruType *parent_block) {
             push(parse_block(parent_block));
             break;
 
-        case TOK_EXEC:
+        case TOK_EXEC: {
             STACK_REQUIRE("executing", 1, TYPE_BLOCK);
             JeruType *block = pop();
-            while(block->as.block.instruction < vector_size(block->as.block.tokens)) {
-                if (!run_token(block->as.block.tokens[block->as.block.instruction++], block)) {
-                    free_jeru_type(block);
-                    return false;
-                }
-            }
+            if (!jeru_exec(block))
+                return false;
             free_jeru_type(block);
             break;
+        }
 
         case TOK_COPY:
             STACK_REQUIRE("copying", 1, TYPE_ALL);
@@ -201,6 +224,35 @@ bool run_token(Token token, JeruType *parent_block) {
             STACK_REQUIRE("popping", 1, TYPE_ALL);
             free_jeru_type(pop());
             break;
+
+        case TOK_IF: {
+            STACK_REQUIRE("if statement", 2, TYPE_BLOCK, TYPE_BOOL);
+            JeruType *cond = pop(), *block = pop();
+            if (jeru_true(cond))
+                if (!jeru_exec(block))
+                    return false;
+            free_jeru_type(cond);
+            free_jeru_type(block);
+            break;
+        }
+
+        case TOK_IFELSE: {
+            STACK_REQUIRE("if-else statement", 3, TYPE_BLOCK, TYPE_BLOCK, TYPE_BOOL);
+            JeruType *cond = pop(), *block_false = pop(), *block_true = pop();
+            if (jeru_true(cond)) {
+                if (!jeru_exec(block_true))
+                    return false;
+            }
+            else {
+                if (!jeru_exec(block_false))
+                    return false;
+            }
+
+            free_jeru_type(cond);
+            free_jeru_type(block_false);
+            free_jeru_type(block_true);
+            break;
+        }
     }
 
     free(token.lexeme.string);

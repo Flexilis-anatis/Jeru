@@ -51,3 +51,15 @@ void print_jeru_type(JeruType *object) {
             break;
     }
 }
+
+bool jeru_true(JeruType *object) {
+    switch (object->id) {
+        case TYPE_DOUBLE:
+        case TYPE_INT:
+            return object->as.floating != 0;
+        case TYPE_STRING:
+            return *object->as.string != '\0';
+    }
+
+    return false;
+}

@@ -24,6 +24,8 @@ char current() {
 }
 
 char start_offset(unsigned short offset) {
+    if (scanner.end - scanner.start < offset)
+        return '\0';
     return *(scanner.start + offset);
 }
 
@@ -81,6 +83,10 @@ Token parse_word() {
                 return make_token(TOK_BLOCK_START);
             case ']':
                 return make_token(TOK_BLOCK_END);
+            case '>':
+                return make_token(TOK_GT);
+            case '<':
+                return make_token(TOK_LT);
         }
     }
 
@@ -94,6 +100,10 @@ Token parse_word() {
             return make_token(matches("xec", 3, TOK_EXEC));
         case 'c':
             return make_token(matches("opy", 3, TOK_COPY));
+        case 'i':
+            if (start_offset(2) == 'e')
+                return make_token(matches("felse", 5, TOK_IFELSE));
+            return make_token(matches("f", 1, TOK_IF));
     }
 
     return make_token(TOK_WORD);
