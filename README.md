@@ -11,11 +11,11 @@ A toy language I'm making. Here's an example of a fibbonacci calculator! (discla
 ] word (int) fibo
 ```
 Alt. without newlines:
-```
+```Forth
 [ [ copy 1 - fibo * ] 2 < if ] word (int) fibo
 ```
 If you called this word with `3 fibo` the stack would progress as follows:
-```
+```Python
 [3] # about to call fibo
 [3, 3, 1] # copys top of stack and pushes one
 [3, 2] # subtracts one from the stack
@@ -28,7 +28,7 @@ If you called this word with `3 fibo` the stack would progress as follows:
 
 This is approx. equivilent to the following python code:
 
-```
+```Python
 def fibo(n: int):
     if n < 2: # or n <= 1
         return 1
@@ -37,6 +37,6 @@ def fibo(n: int):
 
 Alt. without newlines (or type annotation):
 
-```
+```Python
 fibo = lambda n : 1 if n < 2 else fibo(n-1) * n
 ```
