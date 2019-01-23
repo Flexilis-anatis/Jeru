@@ -4,11 +4,11 @@
 A toy language I'm making. Here's an example of a fibbonacci calculator! (disclaimer: doesn't work yet)
 
 ```Forth
-word fibo(int)
+[
     [
         copy 1 - fibo *
     ] 1 < if
-end
+] word (int) fibo
 ```
 If you called this word with `3 fibo` the stack would progress as follows:
 ```
