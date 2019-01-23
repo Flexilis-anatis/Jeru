@@ -34,3 +34,9 @@ def fibo(n: int):
         return 1
     return fibo(n-1) * n
 ```
+
+Alt. without newlines (or type annotation):
+
+```
+fibo = lambda n : 1 if n < 2 else fibo(n-1) * n
+```
