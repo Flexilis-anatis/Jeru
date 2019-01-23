@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "../jerutype.h"
 #include "hashfunc.h"
 
 /// The initial size of the hash table.
@@ -82,7 +83,7 @@ typedef enum {
 /// @param max_load_factor The ratio of collisions:table_size before an autoresize is triggered
 ///        for example: if max_load_factor = 0.1, the table will resize if the number
 ///        of collisions increases beyond 1/10th of the size of the table
-void ht_init(hash_table *table, ht_flags flags, double max_load_factor);
+void ht_init(hash_table *table, double max_load_factor);
 
 /// @brief Destroys the hash_table struct and frees all relevant memory.
 /// @param table A pointer to the hash table.
@@ -94,7 +95,7 @@ void ht_destroy(hash_table *table);
 /// @param key_size The size of the key in bytes.
 /// @param value A pointer to the value.
 /// @param value_size The size of the value in bytes.
-void ht_insert(hash_table *table, void *key, size_t key_size, void *value, size_t value_size);
+void ht_insert(hash_table *table, char *key, size_t key_size, JeruType *block);
 
 /// @brief Inserts an existing hash entry into the hash table.
 /// @param table A pointer to the hash table.
@@ -110,20 +111,20 @@ void ht_insert_he(hash_table *table, hash_entry *entry);
 ///         value will be stored.
 /// @returns A pointer to the requested value. If the return value
 ///           is NULL, the requested key-value pair was not in the table.
-void* ht_get(hash_table *table, void *key, size_t key_size, size_t *value_size);
+void* ht_get(hash_table *table, char *key, size_t key_size);
 
 /// @brief Removes the entry corresponding to the specified key from the hash table.
 /// @param table A pointer to the hash table.
 /// @param key A pointer to the key.
 /// @param key_size The size of the key in bytes.
-void ht_remove(hash_table *table, void *key, size_t key_size);
+void ht_remove(hash_table *table, char *key, size_t key_size);
 
 /// @brief Used to see if the hash table contains a key-value pair.
 /// @param table A pointer to the hash table.
 /// @param key A pointer to the key.
 /// @param key_size The size of the key in bytes.
 /// @returns 1 if the key is in the table, 0 otherwise
-int ht_contains(hash_table *table, void *key, size_t key_size);
+int ht_contains(hash_table *table, char *key, size_t key_size);
 
 /// @brief Returns the number of entries in the hash table.
 /// @param table A pointer to the table.

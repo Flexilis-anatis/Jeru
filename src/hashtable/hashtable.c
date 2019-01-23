@@ -81,7 +81,7 @@ void he_set_value(int flags, hash_entry *entry, void *value, size_t value_size);
 // HashTable functions
 //-----------------------------------
 
-void ht_init(hash_table *table, ht_flags flags, double max_load_factor)
+void ht_init(hash_table *table, double max_load_factor)
 {
     table->hashfunc_x86_32  = MurmurHash3_x86_32;
     table->hashfunc_x86_128 = MurmurHash3_x86_128;
@@ -96,7 +96,7 @@ void ht_init(hash_table *table, ht_flags flags, double max_load_factor)
 
     table->key_count            = 0;
     table->collisions           = 0;
-    table->flags                = flags;
+    table->flags                = 0;
     table->max_load_factor      = max_load_factor;
     table->current_load_factor  = 0.0;
 
@@ -140,11 +140,9 @@ void ht_destroy(hash_table *table)
     table->array = NULL;
 }
 
-void ht_insert(hash_table *table, void *key, size_t key_size, void *value,
-        size_t value_size)
+void ht_insert(hash_table *table, char *key, size_t key_size, JeruType *block)
 {
-    hash_entry *entry = he_create(table->flags, key, key_size, value,
-            value_size);
+    hash_entry *entry = he_create(table->flags, key, key_size, block, sizeof(JeruType));
 
     ht_insert_he(table, entry);
 }
@@ -204,7 +202,7 @@ void ht_insert_he(hash_table *table, hash_entry *entry){
     }
 }
 
-void* ht_get(hash_table *table, void *key, size_t key_size, size_t *value_size)
+void* ht_get(hash_table *table, char *key, size_t key_size)
 {
     unsigned int index  = ht_index(table, key, key_size);
     hash_entry *entry   = table->array[index];
@@ -218,9 +216,6 @@ void* ht_get(hash_table *table, void *key, size_t key_size, size_t *value_size)
     {
         if(he_key_compare(entry, &tmp))
         {
-            if(value_size != NULL)
-                *value_size = entry->value_size;
-
             return entry->value;
         }
         else
@@ -232,7 +227,7 @@ void* ht_get(hash_table *table, void *key, size_t key_size, size_t *value_size)
     return NULL;
 }
 
-void ht_remove(hash_table *table, void *key, size_t key_size)
+void ht_remove(hash_table *table, char *key, size_t key_size)
 {
     unsigned int index  = ht_index(table, key, key_size);
     hash_entry *entry   = table->array[index];
@@ -269,7 +264,7 @@ void ht_remove(hash_table *table, void *key, size_t key_size)
     }
 }
 
-int ht_contains(hash_table *table, void *key, size_t key_size)
+int ht_contains(hash_table *table, char *key, size_t key_size)
 {
     unsigned int index  = ht_index(table, key, key_size);
     hash_entry *entry   = table->array[index];
@@ -339,7 +334,7 @@ void ht_clear(hash_table *table)
 {
     ht_destroy(table);
 
-    ht_init(table, table->flags, table->max_load_factor);
+    ht_init(table, table->max_load_factor);
 }
 
 unsigned int ht_index(hash_table *table, void *key, size_t key_size)

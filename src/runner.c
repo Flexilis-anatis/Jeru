@@ -80,7 +80,7 @@ IsFloat promote(JeruType *x, JeruType *y) {
     do { \
         if (vector_size(main_vm.stack) < req_length) \
             main_vm.error.message = "Not enough space on stack for " op; \
-        else if (!stack_ok(req_length, __VA_ARGS__)) \
+        else if (!stack_ok(req_length, ## __VA_ARGS__)) \
             main_vm.error.message = "Datatypes on stack incorrect for " op; \
         else \
             break; \
@@ -118,8 +118,10 @@ IsFloat promote(JeruType *x, JeruType *y) {
  */
 #define backwards_index(vector, index) ((vector)[vector_size(vector)-index-1])
 bool stack_ok(size_t req_length, ...) {
-    if (vector_size(main_vm.stack) < req_length || req_length == 0)
+    if (vector_size(main_vm.stack) < req_length)
         return false;
+    else if (req_length == 0)
+        return true;
 
     va_list args;
     va_start(args, req_length);
@@ -188,6 +190,16 @@ bool run_token(Token token, JeruType *parent_block) {
                 }
             }
             free_jeru_type(block);
+            break;
+
+        case TOK_COPY:
+            STACK_REQUIRE("copying", 1, TYPE_ALL);
+            push(*(vector_end(main_vm.stack)-1));
+            break;
+
+        case TOK_POP:
+            STACK_REQUIRE("popping", 1, TYPE_ALL);
+            free_jeru_type(pop());
             break;
     }
 

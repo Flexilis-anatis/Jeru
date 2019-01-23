@@ -4,7 +4,7 @@ typedef enum {
     // Custom
     TOK_INT, TOK_DOUBLE, TOK_WORD,
     // Magic
-    TOK_ADD, TOK_SUB, TOK_MUL, TOK_DIV, TOK_PRINT, TOK_EXEC,
+    TOK_ADD, TOK_SUB, TOK_MUL, TOK_DIV, TOK_PRINT, TOK_EXEC, TOK_COPY, TOK_POP,
     // Block
     TOK_BLOCK_START, TOK_BLOCK_END,
     // Signals

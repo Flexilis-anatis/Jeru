@@ -23,6 +23,10 @@ char current() {
     return *scanner.end;
 }
 
+char start_offset(unsigned short offset) {
+    return *(scanner.start + offset);
+}
+
 Token make_token(TokenID id) {
     Token tok;
     tok.id = id;
@@ -83,9 +87,13 @@ Token parse_word() {
     // Parses 2+ length keywords
     switch (*scanner.start) {
         case 'p':
+            if (start_offset(1) == 'o') 
+                return make_token(matches("op", 2, TOK_POP));
             return make_token(matches("rint", 4, TOK_PRINT));
         case 'e':
             return make_token(matches("xec", 3, TOK_EXEC));
+        case 'c':
+            return make_token(matches("opy", 3, TOK_COPY));
     }
 
     return make_token(TOK_WORD);
