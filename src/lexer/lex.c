@@ -19,6 +19,12 @@ bool scanner_at_end() {
     return *scanner.end == '\0';
 }
 
+char peek() {
+    if (*scanner.end == '\0')
+        return '\0';
+    return *(scanner.end+1);
+}
+
 char current() {
     return *scanner.end;
 }
@@ -47,9 +53,10 @@ Token make_token(TokenID id) {
     return tok;
 }
 
-Token make_signal(TokenID signal) {
+Token make_signal(TokenID signal, char *message) {
     Token tok;
     tok.id = signal;
+    tok.lexeme.string = message;
     return tok;
 }
 
@@ -134,10 +141,20 @@ Token next_token() {
     }
 
     if (scanner_at_end())
-        return make_signal(SIG_EOF);
+        return make_signal(SIG_EOF, "EOF");
 
     if (isdigit(current()) || current() == '.') {
         return parse_number();
+    } else if (current() == '#') {
+        do
+            advance();
+        while (current() != '#' && !scanner_at_end());
+        
+        if (scanner_at_end())
+            return make_signal(SIG_ERR, "unterminated comment");
+
+        scanner.start = ++scanner.end;
+        return next_token();
     } else {
         return parse_word();
     }

@@ -35,14 +35,31 @@ void push(JeruType object) {
     vector_push_back(main_vm.stack, object);
 }
 
+#define RAISE_BOILER(token) \
+    main_vm.error.line = token.line; \
+    main_vm.error.exists = true;
+
 JeruType parse_block(JeruType *parent_block) {
     unsigned long nest_level = 1;
     Token token, *block = NULL;
     while (nest_level > 0) {
-        if (parent_block)
+        if (parent_block) {
             token = parent_block->as.block.tokens[parent_block->as.block.instruction++];
-        else
+            if (parent_block->as.block.instruction >= vector_size( parent_block->as.block.tokens)) {
+                main_vm.error.message = "No closing brace in code block";
+                RAISE_BOILER(parent_block->as.block.tokens[0]);
+                vector_free(parent_block->as.block.tokens);
+                return *parent_block;
+            }
+        } else {
             token = next_token();
+            if (token.id == SIG_EOF) {
+                main_vm.error.message = "No closing brace in code block";
+                RAISE_BOILER(parent_block->as.block.tokens[0]);
+                vector_free(parent_block->as.block.tokens);
+                return *parent_block;
+            }
+        }
 
         if (token.id == TOK_BLOCK_START)
             ++nest_level;
@@ -69,22 +86,17 @@ IsFloat promote(JeruType *x, JeruType *y) {
     return IS_FLOAT;
 }
 
-#define RAISE_BOILER \
-    main_vm.error.line = token.line; \
-    main_vm.error.exists = true; \
-    free(token.lexeme.string); \
-    return false;
-
-
 #define STACK_REQUIRE(op, req_length, ...) \
     do { \
-        if (vector_size(main_vm.stack) < req_length) \
+        if (vector_size(main_vm.stack) < (req_length)) \
             main_vm.error.message = "Not enough space on stack for " op; \
-        else if (!stack_ok(req_length, ## __VA_ARGS__)) \
+        else if (!stack_ok((req_length), ## __VA_ARGS__)) \
             main_vm.error.message = "Datatypes on stack incorrect for " op; \
         else \
             break; \
-        RAISE_BOILER \
+        RAISE_BOILER(token) \
+        free(token.lexeme.string); \
+        return false; \
     } while (0)
 
 #define NUMOP(name, floatcode, intcode, tofloat) \
@@ -162,6 +174,11 @@ bool stack_ok(size_t req_length, ...) {
 bool run_token(Token token, JeruType *parent_block) {
     if (token.id == SIG_EOF)
         return main_vm.error.exists = false;
+    else if (token.id == SIG_ERR) {
+        main_vm.error.message = token.lexeme.string;
+        main_vm.error.exists = true;
+        return false;
+    }
 
     switch (token.id) {
         case TOK_DOUBLE:
@@ -253,6 +270,15 @@ bool run_token(Token token, JeruType *parent_block) {
             free_jeru_type(block_true);
             break;
         }
+
+        case TOK_WORD:
+            #define STRING "Unrecognized word "
+            main_vm.error.message = malloc(sizeof(STRING)+token.lexeme.length);
+            sprintf(main_vm.error.message, STRING"%s", token.lexeme.string);
+            RAISE_BOILER(token)
+            free(token.lexeme.string);
+            return false;
+            #undef STRING
     }
 
     free(token.lexeme.string);
