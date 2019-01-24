@@ -28,10 +28,13 @@ JeruType init_jeru_block(Token *tokens) {
 }
 
 void free_jeru_type(JeruType *object) {
-    if (object->id == TYPE_STRING)
+    if (object->id == TYPE_STRING) {
         free(object->as.string);
-    else if (object->id == TYPE_BLOCK)
+    } else if (object->id == TYPE_BLOCK) {
+        for (size_t i = 0; i < vector_size(object->as.block.tokens); ++i)
+            free(object->as.block.tokens[i].lexeme.string);
         vector_free(object->as.block.tokens);
+    }
     free(object);
 }
 

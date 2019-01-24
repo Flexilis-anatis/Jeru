@@ -35,16 +35,6 @@ struct hash_entry {
 };
 
 //----------------------------------
-// Debug macro
-//----------------------------------
-
-#ifdef DEBUG
-#define debug(M, ...) fprintf(stderr, "%s:%d - " M, __FILE__, __LINE__, ##__VA_ARGS__)
-#else
-#define debug(M, ...)
-#endif
-
-//----------------------------------
 // HashEntry functions
 //----------------------------------
 
@@ -90,10 +80,6 @@ void ht_init(hash_table *table, double max_load_factor)
     table->array_size   = HT_INITIAL_SIZE;
     table->array        = malloc(table->array_size * sizeof(*(table->array)));
 
-    if(table->array == NULL) {
-        debug("ht_init failed to allocate memory\n");
-    }
-
     table->key_count            = 0;
     table->collisions           = 0;
     table->flags                = 0;
@@ -114,10 +100,6 @@ void ht_destroy(hash_table *table)
     unsigned int i;
     hash_entry *entry;
     hash_entry *tmp;
-
-    if(table->array == NULL) {
-        debug("ht_destroy got a bad table\n");
-    }
 
     // crawl the entries and delete them
     for(i = 0; i < table->array_size; i++) {
@@ -300,9 +282,6 @@ void** ht_keys(hash_table *table, unsigned int *key_count)
 
     // array of pointers to keys
     ret = malloc(table->key_count * sizeof(void *));
-    if(ret == NULL) {
-        debug("ht_keys failed to allocate memory\n");
-    }
     *key_count = 0;
 
     unsigned int i;
@@ -319,11 +298,6 @@ void** ht_keys(hash_table *table, unsigned int *key_count)
             ret[*key_count]=tmp->key;
             *key_count += 1;
             tmp = tmp->next;
-            // sanity check, should never actually happen
-            if(*key_count >= table->key_count) {
-                debug("ht_keys: too many keys, expected %d, got %d\n",
-                        table->key_count, *key_count);
-            }
         }
     }
 
@@ -351,7 +325,6 @@ void ht_resize(hash_table *table, unsigned int new_size)
 {
     hash_table new_table;
 
-    debug("ht_resize(old=%d, new=%d)\n",table->array_size,new_size);
     new_table.hashfunc_x86_32 = table->hashfunc_x86_32;
     new_table.hashfunc_x86_128 = table->hashfunc_x86_128;
     new_table.hashfunc_x64_128 = table->hashfunc_x64_128;
@@ -407,7 +380,6 @@ hash_entry *he_create(int flags, void *key, size_t key_size, void *value,
 {
     hash_entry *entry = malloc(sizeof(*entry));
     if(entry == NULL) {
-        debug("Failed to create hash_entry\n");
         return NULL;
     }
 
@@ -418,7 +390,6 @@ hash_entry *he_create(int flags, void *key, size_t key_size, void *value,
     else {
         entry->key = malloc(key_size);
         if(entry->key == NULL) {
-            debug("Failed to create hash_entry\n");
             free(entry);
             return NULL;
         }
@@ -432,7 +403,6 @@ hash_entry *he_create(int flags, void *key, size_t key_size, void *value,
     else {
         entry->value = malloc(value_size);
         if(entry->value == NULL) {
-            debug("Failed to create hash_entry\n");
             free(entry->key);
             free(entry);
             return NULL;
@@ -473,7 +443,6 @@ void he_set_value(int flags, hash_entry *entry, void *value, size_t value_size)
 
         entry->value = malloc(value_size);
         if(entry->value == NULL) {
-            debug("Failed to set entry value\n");
             return;
         }
         memcpy(entry->value, value, value_size);

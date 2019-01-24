@@ -38,6 +38,7 @@ void run_repl() {
         while (run_token(next_token(), NULL));
 
         if (main_vm.error.exists) {
+            main_vm.error.exists = false;
             printf("[line %li] Error: %s\n", main_vm.error.line, main_vm.error.message);
 
             vector_free(main_vm.stack);

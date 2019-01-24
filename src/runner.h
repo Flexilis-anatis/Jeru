@@ -8,11 +8,11 @@ typedef struct {
     struct {
         bool exists;
         unsigned long line;
-        const char *message;
+        char *message;
     } error;
 } VM;
 
-void run(const char *source);
+bool run(const char *source);
 void init_vm(void);
 void free_vm(void);
 bool run_token(Token token, JeruType *parent_block);

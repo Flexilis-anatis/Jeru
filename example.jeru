@@ -1,0 +1,7 @@
+0 #pushes 0 to the stack#
+[
+	1 + #incs accumulator#
+	print #prints the accumulator#
+	copy 10 < #tests if (a copy of) the acc. is less than 10#
+] while #more like a dowhile loop in C terms.
+         Runs the block until top of stack is falsey#

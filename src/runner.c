@@ -16,48 +16,65 @@ void free_vm() {
     vector_free(main_vm.stack);
 }
 
-void forget_last(JeruType *copy) {
-    if (copy != NULL)
-        free_jeru_type(copy);
+// Forgets - but doesn't free - the end of the stack.
+void forget_last() {
     vector_set_size(main_vm.stack, vector_size(main_vm.stack) - 1);
 }
 
+// Pops the end of the stack and returns a copy. Returns NULL on failure.
 JeruType *pop() {
     if (main_vm.stack == NULL)
         return NULL;
-    forget_last(NULL);
+    forget_last(); // Keep's it alloced, as long as you don't do anything with the vector
     JeruType *copy = malloc(sizeof(JeruType));
-    memcpy(copy, vector_end(main_vm.stack), sizeof(JeruType));
+    // Copies over the item
+    if (memcpy(copy, vector_end(main_vm.stack), sizeof(JeruType)) == NULL) 
+        return NULL;
     return copy;
 }
 
+// Pushes an item onto the stack
 void push(JeruType object) {
     vector_push_back(main_vm.stack, object);
 }
 
-#define RAISE_BOILER(token) \
-    main_vm.error.line = token.line; \
+// Give this a token to make it set the .line and .exists properties of the error substruct
+#define RAISE_BOILER(line_) \
+    main_vm.error.line = line_; \
     main_vm.error.exists = true;
 
+// Ooh boy... pushes a block onto the stack. If the parent block is NULL, reads from lexer
 JeruType parse_block(JeruType *parent_block) {
+    // when the nest level drops to zero, we've reached the end (same amount of opens and closes)
     unsigned long nest_level = 1;
     Token token, *block = NULL;
+    bool is_first_iter = true;
+    unsigned long first_line;
     while (nest_level > 0) {
         if (parent_block) {
+            // This lovely bit of code get's the next instruction and increases the IP
             token = parent_block->as.block.tokens[parent_block->as.block.instruction++];
-            if (parent_block->as.block.instruction >= vector_size( parent_block->as.block.tokens)) {
+
+            // If the instruction exceeds the size, set an error
+            if (parent_block->as.block.instruction > vector_size(parent_block->as.block.tokens)) {
                 main_vm.error.message = "No closing brace in code block";
-                RAISE_BOILER(parent_block->as.block.tokens[0]);
-                vector_free(parent_block->as.block.tokens);
-                return *parent_block;
+                RAISE_BOILER(parent_block->as.block.tokens[0].line);
+                free_jeru_type(parent_block);
+                break;
             }
         } else {
             token = next_token();
+            // Set the line of the first token for errors
+            if (is_first_iter) {
+                first_line = token.line;
+                is_first_iter = false;
+            }
+
+            // If we've reached the end, they forgot to close their brace
             if (token.id == SIG_EOF) {
                 main_vm.error.message = "No closing brace in code block";
-                RAISE_BOILER(parent_block->as.block.tokens[0]);
-                vector_free(parent_block->as.block.tokens);
-                return *parent_block;
+                RAISE_BOILER(first_line);
+                break;
             }
         }
 
@@ -68,9 +85,13 @@ JeruType parse_block(JeruType *parent_block) {
 
         vector_push_back(block, token);
     }
+
+    // Get rid of closing brace
+    vector_pop_back(block);
     return init_jeru_block(block);
 }
 
+// Promote types to float if neccessary
 typedef enum {NOT_FLOAT, IS_FLOAT} IsFloat;
 IsFloat promote(JeruType *x, JeruType *y) {
     if (x->id == TYPE_INT && y->id == TYPE_INT) {
@@ -86,19 +107,24 @@ IsFloat promote(JeruType *x, JeruType *y) {
     return IS_FLOAT;
 }
 
+// STACK_REQUIRE("command name", 3, TYPE_NUM, TYPE_STRING, TYPE_ALL)
+// ^ makes sure that there are at least 3 items on the stack with the top being anything, the
+// second one being a string, and the third one being a float or int
 #define STACK_REQUIRE(op, req_length, ...) \
     do { \
-        if (vector_size(main_vm.stack) < (req_length)) \
+        if (vector_size(main_vm.stack) < (req_length)) /* make sure ther's enough items */ \
             main_vm.error.message = "Not enough space on stack for " op; \
-        else if (!stack_ok((req_length), ## __VA_ARGS__)) \
+        else if (!stack_ok((req_length), ## __VA_ARGS__)) /* check types */ \
             main_vm.error.message = "Datatypes on stack incorrect for " op; \
         else \
             break; \
-        RAISE_BOILER(token) \
+        RAISE_BOILER(token.line) /* should have broken out of loop now */ \
         free(token.lexeme.string); \
         return false; \
     } while (0)
 
+// For stuff like equality and arithmatic. It needs the name for errors.
+// Use the variables 'x' and 'y' for the values
 #define NUMOP(name, floatcode, intcode, tofloat) \
     { \
         STACK_REQUIRE(name, 2, TYPE_NUM, TYPE_NUM); \
@@ -109,7 +135,7 @@ IsFloat promote(JeruType *x, JeruType *y) {
             y_ptr->as.floating = (double)y_ptr->as.integer; \
         } \
         if (promote(x_ptr, y_ptr) == IS_FLOAT) { \
-            float x = x_ptr->as.floating, y = y_ptr->as.floating; \
+            double x = x_ptr->as.floating, y = y_ptr->as.floating; \
             floatcode \
         } else { \
             long long x = x_ptr->as.integer, y = y_ptr->as.integer; \
@@ -119,9 +145,12 @@ IsFloat promote(JeruType *x, JeruType *y) {
         free_jeru_type(y_ptr); \
         break; \
     }
+
+// When your floatcode and intcode are the same
 #define GENNUMOP(name, code, tofloat) \
     NUMOP(name, code, code, tofloat)
 
+// Executes a block of code. Returns failure or success
 bool jeru_exec(JeruType *block) {
     while(block->as.block.instruction < vector_size(block->as.block.tokens)) {
         if (!run_token(block->as.block.tokens[block->as.block.instruction++], block)) {
@@ -171,6 +200,7 @@ bool stack_ok(size_t req_length, ...) {
     return true;
 }
 
+// Runs a single token.
 bool run_token(Token token, JeruType *parent_block) {
     if (token.id == SIG_EOF)
         return main_vm.error.exists = false;
@@ -189,13 +219,14 @@ bool run_token(Token token, JeruType *parent_block) {
             break;
             
         case TOK_ADD: 
-            GENNUMOP("addition", push(init_jeru_int(x + y));, false)
+            NUMOP("addition", push(init_jeru_double(x + y));, push(init_jeru_int(x + y));, false)
         case TOK_SUB: 
-            GENNUMOP("subtraction", push(init_jeru_int(x - y));, false)
-        case TOK_MUL:
-            GENNUMOP("multiplication", push(init_jeru_int(x * y));, false)
+            NUMOP("subtraction", push(init_jeru_double(x - y));, push(init_jeru_int(x - y));, false)
+        case TOK_MUL: 
+            NUMOP("multiplication", push(init_jeru_double(x * y));, push(init_jeru_int(x * y));, false)
         case TOK_DIV:
-            GENNUMOP("division", push(init_jeru_int(x / y));, true)
+            NUMOP("division", push(init_jeru_double(x / y));, push(init_jeru_int(x / y));, true)
+
         case TOK_GT:
             GENNUMOP("greater than", {
                 if (x > y)
@@ -204,7 +235,7 @@ bool run_token(Token token, JeruType *parent_block) {
                     push(init_jeru_int(0));
             }, false)
         case TOK_LT:
-            GENNUMOP("greater than", {
+            GENNUMOP("less than", {
                 if (x < y)
                     push(init_jeru_int(1));
                 else
@@ -213,15 +244,20 @@ bool run_token(Token token, JeruType *parent_block) {
 
         case TOK_PRINT: {
             STACK_REQUIRE("printing", 1, TYPE_VAL);
-            JeruType *value = pop();
-            print_jeru_type(value);
-            free_jeru_type(value);
+            print_jeru_type(vector_end(main_vm.stack)-1);
             break;
         }
 
         case TOK_BLOCK_START:
             push(parse_block(parent_block));
+            if (main_vm.error.exists) // the parser set's an error upon failure
+                return false;
             break;
+
+        case TOK_BLOCK_END:
+            RAISE_BOILER(token.line);
+            main_vm.error.message = "Unmatched ]";
+            return false;
 
         case TOK_EXEC: {
             STACK_REQUIRE("executing", 1, TYPE_BLOCK);
@@ -254,6 +290,22 @@ bool run_token(Token token, JeruType *parent_block) {
         }
 
         case TOK_IFELSE: {
+            /*
+            sinces else-if's aren't possible, you can fake them like this:
+            In C-like languages:
+                if (cond1) {if-code}
+                else if (cond2) {else-if-code}
+                else {else-code}
+
+            In Jeru:
+                [if-code]
+                [
+                    [else-if-code]
+                    [else-code]
+                    cond2 if
+                ]
+                cond1 if
+            */
             STACK_REQUIRE("if-else statement", 3, TYPE_BLOCK, TYPE_BLOCK, TYPE_BOOL);
             JeruType *cond = pop(), *block_false = pop(), *block_true = pop();
             if (jeru_true(cond)) {
@@ -272,26 +324,49 @@ bool run_token(Token token, JeruType *parent_block) {
         }
 
         case TOK_WORD:
-            #define STRING "Unrecognized word "
+            #define STRING "Unrecognized word '"
             main_vm.error.message = malloc(sizeof(STRING)+token.lexeme.length);
-            sprintf(main_vm.error.message, STRING"%s", token.lexeme.string);
-            RAISE_BOILER(token)
+            sprintf(main_vm.error.message, STRING"%s'", token.lexeme.string);
+            RAISE_BOILER(token.line)
             free(token.lexeme.string);
             return false;
             #undef STRING
+
+        case TOK_WHILE: {
+            STACK_REQUIRE("while loop", 1, TYPE_BLOCK);
+            JeruType *block = pop(), *top = NULL;
+            do {
+                if (top)
+                    free_jeru_type(top);
+
+                if (!jeru_exec(block))
+                    return false;
+                block->as.block.instruction = 0;
+
+                top = vector_size(main_vm.stack) ? pop() : NULL;
+            } while (vector_size(main_vm.stack) && jeru_true(top));
+            if (top)
+                free_jeru_type(top);
+            free_jeru_type(block);
+            break;
+        }
     }
 
-    free(token.lexeme.string);
+    if (parent_block == NULL)
+        free(token.lexeme.string);
     return true;
 }
 
-void run(const char *source) {
+bool run(const char *source) {
     init_vm();
     set_source(source);
     while (run_token(next_token(), NULL));
-    if (main_vm.error.exists)
-        printf("[line %li] Error: %s\n", main_vm.error.line, main_vm.error.message);
-    
     free_vm();
+    if (main_vm.error.exists) {
+        printf("[line %li] Error: %s\n", main_vm.error.line, main_vm.error.message);
+        return false;
+    }
+    
+    return true;
 }
 

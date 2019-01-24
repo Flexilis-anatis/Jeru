@@ -57,6 +57,7 @@ Token make_signal(TokenID signal, char *message) {
     Token tok;
     tok.id = signal;
     tok.lexeme.string = message;
+    tok.line = scanner.line;
     return tok;
 }
 
@@ -73,7 +74,7 @@ TokenID matches(const char *string, unsigned int length, TokenID type) {
 Token parse_word() {
     do
         advance();
-    while (current() && !(isdigit(current()) || isblank(current())));
+    while (current() && !(isdigit(current()) || isspace(current())));
 
     // Parses 1 length keywords
     if (scanner.end - scanner.start == 1) {
@@ -111,6 +112,8 @@ Token parse_word() {
             if (start_offset(2) == 'e')
                 return make_token(matches("felse", 5, TOK_IFELSE));
             return make_token(matches("f", 1, TOK_IF));
+        case 'w':
+            return make_token(matches("hile", 4, TOK_WHILE));
     }
 
     return make_token(TOK_WORD);
@@ -134,7 +137,7 @@ Token parse_number() {
 }
 
 Token next_token() {
-    while (isblank(current())) {
+    while (isspace(current())) {
         if (*scanner.start == '\n')
             ++scanner.line;
         scanner.start = ++scanner.end;
