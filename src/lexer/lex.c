@@ -124,7 +124,7 @@ Token parse_number() {
     while (isdigit(current()) || current() == '.') {
         if (current() == '.') {
             if (is_double) // make sure only one decimal is found
-                return make_token(SIG_ERR);
+                return make_signal(SIG_ERR, "Two decimal points in floating point literal");
             is_double = true;
         }
 

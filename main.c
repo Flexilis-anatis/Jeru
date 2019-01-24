@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
             char *file = read_file(argv[file_index]);
             if (!run(file)) {
                 free(file);
-                return -1;
+                return 1;
             }
             free(file);
         }
