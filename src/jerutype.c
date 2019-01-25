@@ -27,13 +27,13 @@ JeruType jeru_type_block(Token *tokens) {
     return jerutype;
 }
 
+// Does NOT free the given object itself
 void free_jeru_type(JeruType *object) {
     if (object->id == TYPE_STRING) {
         free(object->as.string);
     } else if (object->id == TYPE_BLOCK) {
         free_jeru_block(object->as.block);
     }
-    free(object);
 }
 
 void print_jeru_type(JeruType *object) {

@@ -1,21 +1,33 @@
 #include "src/lexer/lex.h"
 #include "vector/vector.h"
+#include "src/jeruvm.h"
+#include "src/jerutype.h"
+#include <string.h>
 #include <stddef.h>
 #include <stdio.h>
 
-int main(void)
-{
-    set_source("3.7 copy print [ pop 0 + ] exec Ident");
-    Token token, *list = NULL;
-    while ((token = next_token(NULL)).id != SIG_EOF) {
-        printf("Token id: %d\tValue: '%s'\n", token.id, token.lexeme.string);
-        vector_push_back(list, token);
+int main(void) {
+    JeruVM *vm = init_vm();
+
+    push(vm, jeru_type_double(3.7));
+    push(vm, jeru_type_int(123456789));
+
+    // "hello\n\t\"world!\""
+    set_source("\"hello\\n\\t\\\"world!\\\"\"");
+    push(vm, jeru_type_string(next_token(NULL).lexeme.string));
+
+    printf("Stack: ");
+    while (vector_size(vm->stack)) {
+        JeruType *back = get_back(vm);
+        if (back == NULL)
+            break;
+        print_jeru_type(back);
+        putchar(' ');
+        delete_back(vm);
     }
-    JeruBlock *scope = init_jeru_block(list);
-    while ((token = next_token(scope)).id != SIG_EOF) {
-        printf("Token id: %d\tValue: '%s'\n", token.id, token.lexeme.string);
-    }
-    free_jeru_block(scope);
+    putchar('\n');
+
+    free_vm(vm);
 
     return 0;
 }

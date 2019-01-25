@@ -4,8 +4,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
-
-#include <stdio.h> // temp
+#include <stdio.h> // sprintf
 
 static Scanner scanner;
 
@@ -14,8 +13,8 @@ void set_source(const char *source) {
     scanner.line = 1;
 }
 
-void advance() {
-    ++scanner.end;
+char advance() {
+    return *(scanner.end++);
 }
 
 bool scanner_at_end() {
@@ -139,6 +138,71 @@ Token parse_number() {
     return make_token(TOK_INT);
 }
 
+bool parse_out_comment() {
+    do
+        advance();
+    while (current() != '#' && !scanner_at_end());
+    
+    if (scanner_at_end())
+        return false;
+
+    scanner.start = ++scanner.end;
+    return true;
+}
+
+Token parse_string() {
+    char last = '\0';
+    do
+        last = advance();
+    while ((current() != '"' || last == '\\') && !scanner_at_end());
+
+    if (scanner_at_end())
+        return make_signal(SIG_ERR, "string not terminated");
+
+    size_t size = (size_t)((--scanner.end) - (++scanner.start));
+    char *string = malloc(size + 1);
+
+    // index is the index into the actual string, string_index is the index into the new string
+    for (size_t index = 0, string_index = 0; index <= size; ++index, ++string_index) {
+        char character = start_offset(index);
+        if (character == '\\') {
+            character = start_offset(++index);
+            if (index > size)
+                return make_signal(SIG_ERR, "string ends with escape sequence");
+
+            switch (character) {
+                case '\\':
+                    string[string_index] = '\\';
+                    break;
+                case 'n':
+                    string[string_index] = '\n';
+                    break;
+                case 't':
+                    string[string_index] = '\t';
+                    break;
+                case '"':
+                    string[string_index] = '"';
+                    break;
+
+                default: {
+                    string = malloc(sizeof "unrecognized escape sequence '\\'" + 1);
+                    sprintf(string, "unrecognized escape sequence '\\%c'", character);
+                    return make_signal(SIG_ERR, string);
+                }
+            }
+        } else {
+            string[string_index] = character;
+        }
+    }
+
+    Token tok;
+    tok.lexeme.string = string;
+    tok.lexeme.length = scanner.end-scanner.start;
+    tok.line = scanner.line;
+    scanner.start = ++scanner.end;
+    return tok;
+}
+
 Token next_token(JeruBlock *scope) {
     if (scope) {
         if (scope->instruct == vector_size(scope->tokens))
@@ -158,16 +222,11 @@ Token next_token(JeruBlock *scope) {
     if (isdigit(current()) || current() == '.') {
         return parse_number();
     } else if (current() == '#') {
-        printf("Current line: %lu\n", scanner.line);
-        do
-            advance();
-        while (current() != '#' && !scanner_at_end());
-        
-        if (scanner_at_end())
+        if (!parse_out_comment())
             return make_signal(SIG_ERR, "unterminated comment");
-
-        scanner.start = ++scanner.end;
         return next_token(scope);
+    } else if (current() == '"') {
+        return parse_string();
     }
     return parse_word();
 }

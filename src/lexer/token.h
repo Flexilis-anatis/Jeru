@@ -1,8 +1,8 @@
 #pragma once
 
 typedef enum {
-    // Custom
-    TOK_INT, TOK_DOUBLE, TOK_WORD,
+    // Types
+    TOK_INT, TOK_DOUBLE, TOK_STRING, TOK_WORD,
     // Magic
     TOK_ADD, TOK_SUB, TOK_MUL, TOK_DIV, TOK_PRINT, TOK_EXEC, TOK_COPY, TOK_POP,
     TOK_GT, TOK_LT,

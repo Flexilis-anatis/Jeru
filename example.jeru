@@ -1,8 +1,7 @@
 #!/usr/bin/jeru
- The second delimiter must not be on the first line, but shebangs are technically valid!
 #
 
-0 #pushes 0 to the stack#
+0 #pushes 0 to the stack. this will be out accumulator#
 [
 	1 + #incs accumulator#
 	print #prints the accumulator#
