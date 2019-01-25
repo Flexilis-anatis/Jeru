@@ -2,15 +2,16 @@
 #include "../vector/vector.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
-JeruType init_jeru_type(JeruTypeID id) {
+JeruType jeru_type(JeruTypeID id) {
     JeruType type;
     type.id = id;
     return type;
 }
 #define INIT_JERU(funcname, type, asname, typename) \
-    JeruType init_jeru_##funcname(type value) { \
-        JeruType jerutype = init_jeru_type(TYPE_##typename); \
+    JeruType jeru_type_##funcname(type value) { \
+        JeruType jerutype = jeru_type(TYPE_##typename); \
         jerutype.as.asname = value; \
         return jerutype; \
     }
@@ -20,10 +21,9 @@ INIT_JERU(int, long long, integer, INT)
 INIT_JERU(string, char *, string, STRING)
 #undef INIT_JERU
 
-JeruType init_jeru_block(Token *tokens) {
-    JeruType jerutype = init_jeru_type(TYPE_BLOCK);
-    jerutype.as.block.tokens = tokens;
-    jerutype.as.block.instruction = 0;
+JeruType jeru_type_block(Token *tokens) {
+    JeruType jerutype = jeru_type(TYPE_BLOCK);
+    jerutype.as.block = init_jeru_block(tokens);
     return jerutype;
 }
 
@@ -31,9 +31,7 @@ void free_jeru_type(JeruType *object) {
     if (object->id == TYPE_STRING) {
         free(object->as.string);
     } else if (object->id == TYPE_BLOCK) {
-        for (size_t i = 0; i < vector_size(object->as.block.tokens); ++i)
-            free(object->as.block.tokens[i].lexeme.string);
-        vector_free(object->as.block.tokens);
+        free_jeru_block(object->as.block);
     }
     free(object);
 }
@@ -65,4 +63,18 @@ bool jeru_true(JeruType *object) {
     }
 
     return false;
+}
+
+JeruTypeID *jeru_id_list(size_t items, ...) {
+    JeruTypeID *list = malloc(sizeof(JeruTypeID) * (items + 1));
+    va_list args;
+    va_start(args, items);
+
+    for (size_t item = 0; item < items; ++item) 
+        list[item] = va_arg(args, JeruTypeID);
+    list[items] = TYPE_NULL;
+
+    va_end(args);
+
+    return list;
 }

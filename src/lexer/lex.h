@@ -1,5 +1,6 @@
 #pragma once
 #include "token.h"
+#include "block.h"
 
 typedef struct {
     const char *start, *end;
@@ -7,4 +8,4 @@ typedef struct {
 } Scanner;
 
 void set_source(const char *source);
-Token next_token(void);
+Token next_token(JeruBlock *scope);

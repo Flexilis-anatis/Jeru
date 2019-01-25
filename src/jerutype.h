@@ -1,8 +1,11 @@
 #pragma once
 #include "lexer/token.h"
+#include "lexer/block.h"
 #include <stdbool.h>
+#include <stddef.h>
 
 typedef enum {
+    TYPE_NULL   = 0,      // 00000
     TYPE_INT    = 1 << 0, // 00001
     TYPE_DOUBLE = 1 << 1, // 00010
     TYPE_STRING = 1 << 2, // 00100
@@ -21,19 +24,19 @@ typedef struct {
         long long integer;
         double floating;
         char *string;
-        struct {
-            Token *tokens;
-            unsigned long instruction;
-        } block;
+        JeruBlock *block;
     } as;
 } JeruType;
 
-JeruType init_jeru_type(JeruTypeID id);
-JeruType init_jeru_int(long long value);
-JeruType init_jeru_double(double value);
-JeruType init_jeru_string(char *string);
-JeruType init_jeru_block(Token *block);
+JeruType jeru_type(JeruTypeID id);
+JeruType jeru_type_int(long long value);
+JeruType jeru_type_double(double value);
+JeruType jeru_type_string(char *string);
+JeruType jeru_type_block(Token *block);
 bool jeru_true(JeruType *object);
 void free_jeru_type(JeruType *object);
 
 void print_jeru_type(JeruType *object);
+
+// Composes a NULL terminated list of type ID's
+JeruTypeID *jeru_id_list(size_t items, ...);

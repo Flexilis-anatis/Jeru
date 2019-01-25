@@ -9,10 +9,10 @@
 
 #include <assert.h>
 
-extern VM main_vm;
-
 void run_repl() {
-    init_vm();
+    JeruVM *main_vm_ptr = init_vm();
+    JeruVM main_vm = *main_vm_ptr;
+
     printf("Welcome to the Jeru REPL");
     bool first_iter = true;
     char *input;
@@ -35,7 +35,7 @@ void run_repl() {
         add_history(input);
         set_source(input);
 
-        while (run_token(next_token(), NULL));
+        while (run_next_token(main_vm_ptr));
 
         if (main_vm.error.exists) {
             main_vm.error.exists = false;
@@ -71,5 +71,5 @@ void run_repl() {
         putchar(']');
     }
 
-    free_vm();
+    free_vm(main_vm_ptr);
 }

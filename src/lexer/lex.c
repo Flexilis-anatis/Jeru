@@ -1,8 +1,11 @@
 #include "lex.h"
+#include "../../vector/vector.h"
 #include <stdbool.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
+
+#include <stdio.h> // temp
 
 static Scanner scanner;
 
@@ -136,7 +139,13 @@ Token parse_number() {
     return make_token(TOK_INT);
 }
 
-Token next_token() {
+Token next_token(JeruBlock *scope) {
+    if (scope) {
+        if (scope->instruct == vector_size(scope->tokens))
+            return make_signal(SIG_EOF, "EOF");
+        return scope->tokens[scope->instruct++];
+    }
+
     while (isspace(current())) {
         if (*scanner.start == '\n')
             ++scanner.line;
@@ -149,6 +158,7 @@ Token next_token() {
     if (isdigit(current()) || current() == '.') {
         return parse_number();
     } else if (current() == '#') {
+        printf("Current line: %lu\n", scanner.line);
         do
             advance();
         while (current() != '#' && !scanner_at_end());
@@ -157,8 +167,7 @@ Token next_token() {
             return make_signal(SIG_ERR, "unterminated comment");
 
         scanner.start = ++scanner.end;
-        return next_token();
-    } else {
-        return parse_word();
+        return next_token(scope);
     }
+    return parse_word();
 }

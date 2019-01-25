@@ -1,46 +1,21 @@
-#include "src/runner.h"
-#include "src/repl.h"
+#include "src/lexer/lex.h"
+#include "vector/vector.h"
+#include <stddef.h>
 #include <stdio.h>
-#include <stdlib.h>
 
-char *read_file(char *filename)
+int main(void)
 {
-   char *buffer = NULL;
-   int string_size, read_size;
-   FILE *handler = fopen(filename, "rb");
-
-   if (handler)
-   {
-       fseek(handler, 0, SEEK_END);
-       string_size = ftell(handler);
-       rewind(handler);
-       buffer = (char*) malloc(sizeof(char) * (string_size + 1) );
-       read_size = fread(buffer, sizeof(char), string_size, handler);
-       buffer[string_size] = '\0';
-       if (string_size != read_size) {
-           free(buffer);
-           buffer = NULL;
-       }
-
-       fclose(handler);
+    set_source("3.7 copy print [ pop 0 + ] exec Ident");
+    Token token, *list = NULL;
+    while ((token = next_token(NULL)).id != SIG_EOF) {
+        printf("Token id: %d\tValue: '%s'\n", token.id, token.lexeme.string);
+        vector_push_back(list, token);
     }
-
-    return buffer;
-}
-
-int main(int argc, char **argv) {
-    if (argc == 1) {
-        run_repl();
-    } else {
-        for (int file_index = 1; file_index < argc; ++file_index) {
-            char *file = read_file(argv[file_index]);
-            if (!run(file)) {
-                free(file);
-                return 1;
-            }
-            free(file);
-        }
+    JeruBlock *scope = init_jeru_block(list);
+    while ((token = next_token(scope)).id != SIG_EOF) {
+        printf("Token id: %d\tValue: '%s'\n", token.id, token.lexeme.string);
     }
+    free_jeru_block(scope);
 
     return 0;
 }
