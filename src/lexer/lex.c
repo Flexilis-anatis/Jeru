@@ -162,10 +162,11 @@ Token parse_string() {
 
     /* this entire next section parses out escape codes */
     size_t size = (size_t)((--scanner.end) - (++scanner.start));
-    char *string = malloc(size + 1);
+    char *string = malloc(size + 2);
 
     // index is the index into the actual string, string_index is the index into the new string
-    for (size_t index = 0, string_index = 0; index <= size; ++index, ++string_index) {
+    size_t string_index = 0;
+    for (size_t index = 0; index <= size; ++index, ++string_index) {
         char character = start_offset(index);
         if (character == '\\') {
             character = start_offset(++index);
@@ -198,12 +199,15 @@ Token parse_string() {
             string[string_index] = character;
         }
     }
+    string[string_index] = '\0';
 
     Token tok;
+    tok.id = TOK_STRING;
     tok.lexeme.string = string;
     tok.lexeme.length = scanner.end-scanner.start;
     tok.line = scanner.line;
-    scanner.start = ++scanner.end;
+    scanner.end += 2;
+    scanner.start = scanner.end;
     return tok;
 }
 

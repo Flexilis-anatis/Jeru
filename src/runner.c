@@ -83,6 +83,14 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
             push(vm, jeru_type_int(strtoll(token.lexeme.string, NULL, 10)));
             break;
 
+        case TOK_STRING:
+            push(vm, jeru_type_string(token.lexeme.string));
+            return true;
+
+        case TOK_DOUBLE:
+            push(vm, jeru_type_double(strtod(token.lexeme.string, NULL)));
+            break;
+
         case TOK_PRINT:
             if (!vector_size(vm->stack)) 
                 SET_ERROR(STACK_MSG "printing");
@@ -97,6 +105,15 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
 
         case TOK_ADD:
             NUMOP("addition", push(vm, jeru_type_double(x + y));, push(vm, jeru_type_int(x + y));)
+        case TOK_SUB:
+            NUMOP("subtraction", push(vm, jeru_type_double(x - y));, push(vm, jeru_type_int(x - y));)
+        case TOK_MUL:
+            NUMOP("multiplication", push(vm, jeru_type_double(x * y));, push(vm, jeru_type_int(x * y));)
+        case TOK_DIV:
+            if (vector_size(vm->stack))
+                morph_type(get_back(vm), ToFloat);
+            NUMOP("division", push(vm, jeru_type_double(x / y));, (void)x;(void)y;)
+        
     }
 
     if (!scope)
