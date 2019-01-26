@@ -16,7 +16,7 @@ void free_vm(JeruVM *vm) {
     free(vm);
 }
 
-void push(JeruVM *vm, JeruType item) {
+void push_data(JeruVM *vm, JeruType item) {
     vector_push_back(vm->stack, item);
 }
 
@@ -36,6 +36,27 @@ bool delete_back(JeruVM *vm) {
     free_jeru_type(get_back(vm));
     vector_pop_back(vm->stack);
     return true;
+}
+
+void push_block(JeruVM *vm, JeruBlock block) {
+    vector_push_back(vm->call_stack, block);
+}
+
+JeruBlock *get_block_from(JeruVM *vm, size_t index) {
+    if (vector_size(vm->call_stack) <= index)
+        return NULL;
+    return (vector_end(vm->call_stack)-1)-index;
+}
+
+JeruBlock *get_block(JeruVM *vm) {
+    return get_block_from(vm, 0);
+}
+
+void delete_block(JeruVM *vm) {
+    if (vector_size(vm->call_stack) == 0)
+        return;
+    free_jeru_block(get_block(vm));
+    vector_pop_back(vm->call_stack);
 }
 
 bool check_type(JeruVM *vm, JeruTypeID expected, size_t index) {

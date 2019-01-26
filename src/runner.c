@@ -31,6 +31,8 @@
         } \
         break; \
     }
+#define TYPELESS_NUMOP(name, code) \
+    NUMOP(name, code, code)
 
 typedef enum {ToFloat, ToInt, Normal} TypePromo;
 void morph_type(JeruType *item, TypePromo type) {
@@ -80,15 +82,15 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
 
     switch(token.id) {
         case TOK_INT:
-            push(vm, jeru_type_int(strtoll(token.lexeme.string, NULL, 10)));
+            push_data(vm, jeru_type_int(strtoll(token.lexeme.string, NULL, 10)));
             break;
 
         case TOK_STRING:
-            push(vm, jeru_type_string(token.lexeme.string));
+            push_data(vm, jeru_type_string(token.lexeme.string));
             return true;
 
         case TOK_DOUBLE:
-            push(vm, jeru_type_double(strtod(token.lexeme.string, NULL)));
+            push_data(vm, jeru_type_double(strtod(token.lexeme.string, NULL)));
             break;
 
         case TOK_PRINT:
@@ -104,16 +106,26 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
             break;
 
         case TOK_ADD:
-            NUMOP("addition", push(vm, jeru_type_double(x + y));, push(vm, jeru_type_int(x + y));)
+            NUMOP("addition", push_data(vm, jeru_type_double(x + y));, push_data(vm, jeru_type_int(x + y));)
         case TOK_SUB:
-            NUMOP("subtraction", push(vm, jeru_type_double(x - y));, push(vm, jeru_type_int(x - y));)
+            NUMOP("subtraction", push_data(vm, jeru_type_double(x - y));, push_data(vm, jeru_type_int(x - y));)
         case TOK_MUL:
-            NUMOP("multiplication", push(vm, jeru_type_double(x * y));, push(vm, jeru_type_int(x * y));)
+            NUMOP("multiplication", push_data(vm, jeru_type_double(x * y));, push_data(vm, jeru_type_int(x * y));)
         case TOK_DIV:
             if (vector_size(vm->stack))
                 morph_type(get_back(vm), ToFloat);
-            NUMOP("division", push(vm, jeru_type_double(x / y));, (void)x;(void)y;)
-        
+            NUMOP("division", push_data(vm, jeru_type_double(x / y));, (void)x;(void)y;)
+        case TOK_LT:
+            TYPELESS_NUMOP("less than operation",
+                push_data(vm, jeru_type_int(x < y ? 1 : 0));
+            )
+        case TOK_GT:
+            TYPELESS_NUMOP("greater than operation", 
+                push_data(vm, jeru_type_int(x > y ? 1 : 0));
+            )
+
+        default:
+            SET_ERROR("Unimplemented feature");
     }
 
     if (!scope)
