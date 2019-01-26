@@ -47,7 +47,7 @@ Token make_token(TokenID id) {
         string[cur - scanner.start] = scanner.start[cur - scanner.start];
     string[scanner.end-scanner.start] = '\0';
     // Yuck...
-    
+
     tok.lexeme.string = string;
     tok.lexeme.length = scanner.end-scanner.start;
     tok.line = scanner.line;
@@ -135,6 +135,7 @@ Token parse_number() {
 
     if (is_double)
         return make_token(TOK_DOUBLE);
+
     return make_token(TOK_INT);
 }
 

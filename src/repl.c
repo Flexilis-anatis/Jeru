@@ -7,15 +7,13 @@
 #define LOGARITHMIC_GROWTH
 #include "../vector/vector.h"
 
-#include <assert.h>
-
 void run_repl() {
-    JeruVM *main_vm_ptr = init_vm();
-    JeruVM main_vm = *main_vm_ptr;
-
     printf("Welcome to the Jeru REPL");
     bool first_iter = true;
     char *input;
+
+    JeruVM *vm = init_vm();
+
     while (1) {
         if (first_iter)
             first_iter = false;
@@ -24,52 +22,47 @@ void run_repl() {
 
         input = readline("\n>>> ");
 
-        JeruType *stack_copy = NULL;
-        size_t size = 0;
-        if (main_vm.stack) {
-            size = (vector_capacity(main_vm.stack) * sizeof(JeruType)) + (sizeof(size_t) * 2);
-            stack_copy = malloc(size);
-            memcpy(stack_copy, &((size_t *)main_vm.stack)[-2], size);
+        bool stack_is_null = true;
+        JeruVM copy;
+        if (vm->stack) {
+            copy = *vm;
+            stack_is_null = false;
         }
 
         add_history(input);
         set_source(input);
 
-        while (run_next_token(main_vm_ptr));
+        while (run_next_token(vm, NULL));
 
-        if (main_vm.error.exists) {
-            main_vm.error.exists = false;
-            printf("[line %li] Error: %s\n", main_vm.error.line, main_vm.error.message);
+        if (vm->error.exists) {
+            vm->error.exists = false;
+            printf("[line %li] Error: %s\n", vm->error.line, vm->error.message);
 
-            vector_free(main_vm.stack);
-            if (stack_copy) {
-                main_vm.stack = malloc(size);
-                memcpy(main_vm.stack, stack_copy, size);
-                // Haha... sinces the size and reserved size are stored in stack[-1] and [-2] as
-                // size_t's, I have to cast it to size_t *, get the value that will become [0], 
-                // then cast it back to a JeruType *
-                main_vm.stack = (JeruType *)&(((size_t *)main_vm.stack)[2]);
+            free_vm(vm);
+            vm = init_vm();
 
-                free(stack_copy);
+            // Restore the stack
+            if (!stack_is_null) {
+                size_t size = vector_capacity(&copy) * sizeof(JeruType) + 2 * sizeof(size_t);
+                vm->stack = malloc(size);
+                memcpy(&((size_t *)vm->stack)[-2], &((size_t *)&copy)[-2], size);
             } else {
-                main_vm.stack = NULL;
+                vm->stack = NULL;
             }
             continue;
-        } else {
-            free(stack_copy);
         }
 
         printf("\n[");
-        for (size_t i = 0; i+1 < vector_size(main_vm.stack); ++i) {
-            print_jeru_type(&main_vm.stack[i]);
+        for (size_t i = 0; i+1 < vector_size(vm->stack); ++i) {
+            print_jeru_clean(&vm->stack[i]);
             printf(", ");
         }
         // Print last value if there is one
-        if (vector_size(main_vm.stack))
-            print_jeru_type(&main_vm.stack[vector_size(main_vm.stack)-1]);
+        if (vector_size(vm->stack))
+            print_jeru_clean(&vm->stack[vector_size(vm->stack)-1]);
 
         putchar(']');
     }
 
-    free_vm(main_vm_ptr);
+    free_vm(vm);
 }

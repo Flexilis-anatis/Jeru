@@ -1,36 +1,50 @@
-#include "src/lexer/lex.h"
-#include "vector/vector.h"
-#include "src/jeruvm.h"
-#include "src/jerutype.h"
-#include <string.h>
-#include <stddef.h>
+#include "src/runner.h"
+#include "src/repl.h"
 #include <stdio.h>
+#include <stdlib.h>
 
-int main(void) {
-    JeruVM *vm = init_vm();
+char *read_file(char *filename)
+{
+   char *buffer = NULL;
+   int string_size, read_size;
+   FILE *handler = fopen(filename, "rb");
 
-    push(vm, jeru_type_double(3.7));
-    push(vm, jeru_type_int(123456789));
+   if (handler)
+   {
+       fseek(handler, 0, SEEK_END);
+       string_size = ftell(handler);
+       rewind(handler);
+       buffer = (char*) malloc(sizeof(char) * (string_size + 1) );
+       read_size = fread(buffer, sizeof(char), string_size, handler);
+       buffer[string_size] = '\0';
+       if (string_size != read_size) {
+           free(buffer);
+           buffer = NULL;
+       }
 
-    // "hello\n\t\"world!\""
-    set_source("\"hello\\n\\t\\\"world!\\\"\"");
-    push(vm, jeru_type_string(next_token(NULL).lexeme.string));
-
-    if(!stack_has_types(vm, jeru_id_list(2, TYPE_INT, TYPE_STRING)))
-        printf("Doesn't work :(\n");
-
-    printf("Stack: ");
-    while (vector_size(vm->stack)) {
-        JeruType *back = get_back(vm);
-        if (back == NULL)
-            break;
-        print_jeru_clean(back);
-        putchar(' ');
-        delete_back(vm);
+       fclose(handler);
     }
-    putchar('\n');
 
-    free_vm(vm);
+    return buffer;
+}
+
+int main(int argc, char **argv) {
+    if (argc == 1) {
+        run_repl();
+    } else {
+        JeruVM *vm = init_vm();
+        for (int file_index = 1; file_index < argc; ++file_index) {
+            char *file = read_file(argv[file_index]);
+            set_source(file);
+            if (!run_next_token(vm, NULL)) {
+                free(file);
+                free_vm(vm);
+                return -1;
+            }
+            free(file);
+        }
+        free_vm(vm);
+    }
 
     return 0;
 }
