@@ -45,7 +45,7 @@ bool check_type(JeruVM *vm, JeruTypeID expected, size_t index) {
 
 bool stack_has_types(JeruVM *vm, JeruTypeID *types) {
     size_t index = 0;
-    for (;types;++types,++index) {
+    for (;*types;++types,++index) {
         if (!check_type(vm, *types, index))
             return false;
     }

@@ -159,6 +159,7 @@ Token parse_string() {
     if (scanner_at_end())
         return make_signal(SIG_ERR, "string not terminated");
 
+    /* this entire next section parses out escape codes */
     size_t size = (size_t)((--scanner.end) - (++scanner.start));
     char *string = malloc(size + 1);
 
@@ -185,9 +186,11 @@ Token parse_string() {
                     break;
 
                 default: {
-                    string = malloc(sizeof "unrecognized escape sequence '\\'" + 1);
-                    sprintf(string, "unrecognized escape sequence '\\%c'", character);
+                    #define STRING "unrecognized escape sequence '\\%c'"
+                    string = malloc(sizeof STRING - 1);
+                    sprintf(string, STRING, character);
                     return make_signal(SIG_ERR, string);
+                    #undef STRING
                 }
             }
         } else {

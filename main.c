@@ -16,12 +16,15 @@ int main(void) {
     set_source("\"hello\\n\\t\\\"world!\\\"\"");
     push(vm, jeru_type_string(next_token(NULL).lexeme.string));
 
+    if(!stack_has_types(vm, jeru_id_list(2, TYPE_INT, TYPE_STRING)))
+        printf("Doesn't work :(\n");
+
     printf("Stack: ");
     while (vector_size(vm->stack)) {
         JeruType *back = get_back(vm);
         if (back == NULL)
             break;
-        print_jeru_type(back);
+        print_jeru_clean(back);
         putchar(' ');
         delete_back(vm);
     }

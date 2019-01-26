@@ -37,6 +37,8 @@ bool jeru_true(JeruType *object);
 void free_jeru_type(JeruType *object);
 
 void print_jeru_type(JeruType *object);
+// For stack output. Prints all types. Translates newlines -> \n, etc.
+void print_jeru_clean(JeruType *object);
 
-// Composes a NULL terminated list of type ID's
+// Composes a reversed, 0-terminated array of JeruTypeID's
 JeruTypeID *jeru_id_list(size_t items, ...);

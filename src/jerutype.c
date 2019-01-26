@@ -42,7 +42,7 @@ void print_jeru_type(JeruType *object) {
             printf("%f", object->as.floating);
             break;
         case TYPE_INT:
-            printf("%lld", object->as.integer);
+            printf("%lld",object->as.integer);
             break;
         case TYPE_STRING:
             printf("%s", object->as.string);
@@ -51,6 +51,37 @@ void print_jeru_type(JeruType *object) {
             printf("{...}");
             break;
     }
+}
+
+void print_sanatized_string(char *string) {
+    putchar('"');
+    for(; *string; ++string) {
+        switch (*string) {
+            case '\\':
+                printf("\\\\");
+                break;
+            case '\n':
+                printf("\\n");
+                break;
+            case '\t':
+                printf("\\t");
+                break;
+            case '"':
+                printf("\\\"");
+                break;
+            default:
+                putchar(*string);
+                break;
+        }
+    }
+    putchar('"');
+}
+
+void print_jeru_clean(JeruType *object) {
+    if (object->id == TYPE_STRING)
+        print_sanatized_string(object->as.string);
+    else
+        print_jeru_type(object);
 }
 
 bool jeru_true(JeruType *object) {
@@ -70,8 +101,8 @@ JeruTypeID *jeru_id_list(size_t items, ...) {
     va_list args;
     va_start(args, items);
 
-    for (size_t item = 0; item < items; ++item) 
-        list[item] = va_arg(args, JeruTypeID);
+    for (size_t item = 0; item < items; ++item)
+        list[items-1-item] = va_arg(args, JeruTypeID);
     list[items] = TYPE_NULL;
 
     va_end(args);
