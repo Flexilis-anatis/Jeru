@@ -22,11 +22,12 @@ void run_repl() {
 
         input = readline("\n>>> ");
 
-        bool stack_is_null = true;
-        JeruVM copy;
+        JeruType *stack_copy = NULL;
+        size_t size = 0;
         if (vm->stack) {
-            copy = *vm;
-            stack_is_null = false;
+            size = (vector_capacity(vm->stack) * sizeof(JeruType)) + (sizeof(size_t) * 2);
+            stack_copy = malloc(size);
+            memcpy(stack_copy, &((size_t *)vm->stack)[-2], size);
         }
 
         add_history(input);
@@ -42,14 +43,22 @@ void run_repl() {
             vm = init_vm();
 
             // Restore the stack
-            if (!stack_is_null) {
-                size_t size = vector_capacity(&copy) * sizeof(JeruType) + 2 * sizeof(size_t);
+            vector_free(vm->stack);
+            if (stack_copy) {
                 vm->stack = malloc(size);
-                memcpy(&((size_t *)vm->stack)[-2], &((size_t *)&copy)[-2], size);
+                memcpy(vm->stack, stack_copy, size);
+                // Haha... sinces the size and reserved size are stored in stack[-1] and [-2] as
+                // size_t's, I have to cast it to size_t array, get the value that will become [0],
+                // then cast it back to a JeruType array
+                vm->stack = (JeruType *)&(((size_t *)vm->stack)[2]);
+
+                free(stack_copy);
             } else {
                 vm->stack = NULL;
             }
             continue;
+        } else {
+            free(stack_copy);
         }
 
         printf("\n[");
