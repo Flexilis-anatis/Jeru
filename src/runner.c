@@ -2,6 +2,7 @@
 #include "jerutype.h"
 #include "../vector/vector.h"
 #include <stdlib.h>
+#include <string.h>
 
 #define SET_ERROR(msg) \
     { \
@@ -12,7 +13,7 @@
     }
 #define STACK_MSG "Not enough space on stack for "
 
-JeruBlock parse_block(bool *eof_error, JeruBlock *scope) {
+JeruBlock parse_block(bool *eof_error, Token *scope) {
     *eof_error = false;
 
     Token *tok_list = NULL;
@@ -33,8 +34,9 @@ JeruBlock parse_block(bool *eof_error, JeruBlock *scope) {
         vector_push_back(tok_list, token);
     }
 
-    vector_pop_back(tok_list); // ending ]
-    return init_jeru_block(tok_list);
+    vector_pop_back(tok_list); // get rid of final ]
+    JeruBlock block = init_jeru_block(tok_list);
+    return copy_jeru_block(&block);
 }
 
 bool jeru_exec(JeruVM *vm, JeruBlock *scope) {
@@ -171,15 +173,19 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
         case TOK_EXEC:
             if (!vector_size(vm->call_stack))
                 SET_ERROR("Nothing to execute");
-            if (!jeru_exec(vm, get_block(vm))) {
-                delete_block(vm);
-                return false;
-            }
+
+            JeruBlock block = copy_jeru_block(get_block(vm));
             delete_block(vm);
+
+            if (!jeru_exec(vm, &block))
+                return false;
+
+            free_jeru_block(block);
+            
             break;
 
         default:
-            SET_ERROR("Unimplemented feature");
+            SET_ERROR("Unimplemented feature.");
     }
 
     if (!scope)
