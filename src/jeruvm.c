@@ -5,6 +5,7 @@
 JeruVM *init_vm(void) {
     JeruVM *vm = malloc(sizeof(JeruVM));
     vm->stack = NULL;
+    vm->call_stack = NULL;
     vm->error.exists = false;
     return vm;
 }
@@ -12,6 +13,9 @@ JeruVM *init_vm(void) {
 void free_vm(JeruVM *vm) {
     for (size_t index = 0; index < vector_size(vm->stack); ++index)
         free_jeru_type(&vm->stack[index]);
+    for (size_t index = 0; index < vector_size(vm->call_stack); ++index)
+        free_jeru_block(vm->call_stack[index]);
+    vector_free(vm->call_stack);
     vector_free(vm->stack);
     free(vm);
 }
@@ -43,18 +47,18 @@ void push_block(JeruVM *vm, JeruBlock block) {
 }
 
 // This one's naive and assumes you know what you're doing
-JeruBlock get_block_from(JeruVM *vm, size_t index) {
-    return *((vector_end(vm->call_stack)-1)-index);
+JeruBlock *get_block_from(JeruVM *vm, size_t index) {
+    return ((vector_end(vm->call_stack)-1)-index);
 }
 
-JeruBlock get_block(JeruVM *vm) {
+JeruBlock *get_block(JeruVM *vm) {
     return get_block_from(vm, 0);
 }
 
 void delete_block(JeruVM *vm) {
     if (vector_size(vm->call_stack) == 0)
         return;
-    free_jeru_block(get_block(vm));
+    free_jeru_block(*get_block(vm));
     vector_pop_back(vm->call_stack);
 }
 

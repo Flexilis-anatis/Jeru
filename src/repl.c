@@ -29,6 +29,13 @@ void run_repl() {
             stack_copy = malloc(size);
             memcpy(stack_copy, &((size_t *)vm->stack)[-2], size);
         }
+        JeruBlock *call_stack_copy = NULL;
+        size_t call_size = 0;
+        if (vm->call_stack) {
+            size = (vector_capacity(vm->call_stack) * sizeof(JeruBlock)) + (sizeof(size_t) * 2);
+            call_stack_copy = malloc(size);
+            memcpy(call_stack_copy, &((size_t *)vm->call_stack)[-2], size);
+        }
 
         add_history(input);
         set_source(input);
@@ -43,7 +50,6 @@ void run_repl() {
             vm = init_vm();
 
             // Restore the stack
-            vector_free(vm->stack);
             if (stack_copy) {
                 vm->stack = malloc(size);
                 memcpy(vm->stack, stack_copy, size);
@@ -56,9 +62,21 @@ void run_repl() {
             } else {
                 vm->stack = NULL;
             }
+
+            if (call_stack_copy) {
+                vm->call_stack = malloc(call_size);
+                memcpy(vm->call_stack, call_stack_copy, size);
+                vm->call_stack = (JeruBlock *)&(((size_t *)vm->call_stack)[2]);
+
+                free(call_stack_copy);
+            } else {
+                vm->call_stack = NULL;
+            }
+
             continue;
         } else {
             free(stack_copy);
+            free(call_stack_copy);
         }
 
         printf("\n[");
@@ -69,8 +87,7 @@ void run_repl() {
         // Print last value if there is one
         if (vector_size(vm->stack))
             print_jeru_clean(&vm->stack[vector_size(vm->stack)-1]);
-
-        putchar(']');
+        printf("], %lu", vector_size(vm->call_stack));
     }
 
     free_vm(vm);

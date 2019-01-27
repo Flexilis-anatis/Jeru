@@ -24,7 +24,6 @@ typedef struct {
         long long integer;
         double floating;
         char *string;
-        JeruBlock *block;
     } as;
 } JeruType;
 
@@ -32,7 +31,6 @@ JeruType jeru_type(JeruTypeID id);
 JeruType jeru_type_int(long long value);
 JeruType jeru_type_double(double value);
 JeruType jeru_type_string(char *string);
-JeruType jeru_type_block(Token *block);
 bool jeru_true(JeruType *object);
 void free_jeru_type(JeruType *object);
 

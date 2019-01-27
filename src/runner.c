@@ -20,21 +20,28 @@ JeruBlock parse_block(bool *eof_error, JeruBlock *scope) {
     while (nest_level > 0 && !*eof_error) {
         Token token = next_token(scope);
         switch (token.id) {
-            case TOK_BLOCK_START:
-                ++nest_level; break;
-            case TOK_BLOCK_END:
-                --nest_level; break;
             case SIG_EOF:
                 if (nest_level)
                     *eof_error = true;
                 break;
-            default:
-                vector_push_back(tok_list, token);
+            case TOK_BLOCK_START:
+                ++nest_level; break;
+            case TOK_BLOCK_END:
+                --nest_level; break;
         }
+
+        vector_push_back(tok_list, token);
     }
 
     vector_pop_back(tok_list); // ending ]
     return init_jeru_block(tok_list);
+}
+
+bool jeru_exec(JeruVM *vm, JeruBlock *scope) {
+    while (scope->instruct < vector_size(scope->tokens))
+        if (!run_next_token(vm, scope))
+            return false;
+    return true;
 }
 
 #define NUMOP(name, floatcode, intcode) \
@@ -153,7 +160,7 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
             bool eof_error;
             push_block(vm, parse_block(&eof_error, scope));
             if (eof_error) {
-                delete_back(vm);
+                delete_block(vm);
                 SET_ERROR("Unmatched '['");
             }
             break;
@@ -161,15 +168,15 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
         case TOK_BLOCK_END:
             SET_ERROR("Unmatched ']'")
 
-        /*case TOK_EXEC:
+        case TOK_EXEC:
             if (!vector_size(vm->call_stack))
                 SET_ERROR("Nothing to execute");
-            if (!jeru_exec(vm, scope, get_block(vm))) {
+            if (!jeru_exec(vm, get_block(vm))) {
                 delete_block(vm);
                 return false;
             }
             delete_block(vm);
-            break;*/
+            break;
 
         default:
             SET_ERROR("Unimplemented feature");
