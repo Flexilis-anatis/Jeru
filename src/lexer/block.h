@@ -6,5 +6,5 @@ typedef struct {
     unsigned long instruct;
 } JeruBlock;
 
-JeruBlock *init_jeru_block(Token *tokens);
-void free_jeru_block(JeruBlock *block);
+JeruBlock init_jeru_block(Token *tokens);
+void free_jeru_block(JeruBlock block);

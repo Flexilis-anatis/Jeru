@@ -12,6 +12,31 @@
     }
 #define STACK_MSG "Not enough space on stack for "
 
+JeruBlock parse_block(bool *eof_error, JeruBlock *scope) {
+    *eof_error = false;
+
+    Token *tok_list = NULL;
+    size_t nest_level = 1;
+    while (nest_level > 0 && !*eof_error) {
+        Token token = next_token(scope);
+        switch (token.id) {
+            case TOK_BLOCK_START:
+                ++nest_level; break;
+            case TOK_BLOCK_END:
+                --nest_level; break;
+            case SIG_EOF:
+                if (nest_level)
+                    *eof_error = true;
+                break;
+            default:
+                vector_push_back(tok_list, token);
+        }
+    }
+
+    vector_pop_back(tok_list); // ending ]
+    return init_jeru_block(tok_list);
+}
+
 #define NUMOP(name, floatcode, intcode) \
     { \
         if (vector_size(vm->stack) < 2) \
@@ -123,6 +148,28 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
             TYPELESS_NUMOP("greater than operation", 
                 push_data(vm, jeru_type_int(x > y ? 1 : 0));
             )
+
+        case TOK_BLOCK_START: {
+            bool eof_error;
+            push_block(vm, parse_block(&eof_error, scope));
+            if (eof_error) {
+                delete_back(vm);
+                SET_ERROR("Unmatched '['");
+            }
+            break;
+        }
+        case TOK_BLOCK_END:
+            SET_ERROR("Unmatched ']'")
+
+        /*case TOK_EXEC:
+            if (!vector_size(vm->call_stack))
+                SET_ERROR("Nothing to execute");
+            if (!jeru_exec(vm, scope, get_block(vm))) {
+                delete_block(vm);
+                return false;
+            }
+            delete_block(vm);
+            break;*/
 
         default:
             SET_ERROR("Unimplemented feature");

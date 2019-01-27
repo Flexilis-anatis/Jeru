@@ -42,13 +42,12 @@ void push_block(JeruVM *vm, JeruBlock block) {
     vector_push_back(vm->call_stack, block);
 }
 
-JeruBlock *get_block_from(JeruVM *vm, size_t index) {
-    if (vector_size(vm->call_stack) <= index)
-        return NULL;
-    return (vector_end(vm->call_stack)-1)-index;
+// This one's naive and assumes you know what you're doing
+JeruBlock get_block_from(JeruVM *vm, size_t index) {
+    return *((vector_end(vm->call_stack)-1)-index);
 }
 
-JeruBlock *get_block(JeruVM *vm) {
+JeruBlock get_block(JeruVM *vm) {
     return get_block_from(vm, 0);
 }
 

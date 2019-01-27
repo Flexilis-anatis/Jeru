@@ -21,18 +21,10 @@ INIT_JERU(int, long long, integer, INT)
 INIT_JERU(string, char *, string, STRING)
 #undef INIT_JERU
 
-JeruType jeru_type_block(Token *tokens) {
-    JeruType jerutype = jeru_type(TYPE_BLOCK);
-    jerutype.as.block = init_jeru_block(tokens);
-    return jerutype;
-}
-
 // Does NOT free the given object itself
 void free_jeru_type(JeruType *object) {
     if (object->id == TYPE_STRING) {
         free(object->as.string);
-    } else if (object->id == TYPE_BLOCK) {
-        free_jeru_block(object->as.block);
     }
 }
 

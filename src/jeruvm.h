@@ -29,8 +29,8 @@ bool delete_back(JeruVM *vm);
 
 // These map to the last 4 functions, but with the call stack
 void push_block(JeruVM *vm, JeruBlock block);
-JeruBlock *get_block_from(JeruVM *vm, size_t index);
-JeruBlock *get_block(JeruVM *vm);
+JeruBlock get_block_from(JeruVM *vm, size_t index);
+JeruBlock get_block(JeruVM *vm);
 void delete_block(JeruVM *vm);
 
 // This one's a whopper... given a 0-terminated list of types, make sure the stack has
