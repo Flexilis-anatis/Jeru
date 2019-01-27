@@ -5,16 +5,15 @@
 #include <stddef.h>
 
 typedef enum {
-    TYPE_NULL   = 0,      // 00000
-    TYPE_INT    = 1 << 0, // 00001
-    TYPE_DOUBLE = 1 << 1, // 00010
-    TYPE_STRING = 1 << 2, // 00100
-    TYPE_BLOCK  = 1 << 3, // 01000
-    TYPE_END    = 1 << 4, // 10000
+    TYPE_NULL   = 0,      // 0000
+    TYPE_INT    = 1 << 0, // 0001
+    TYPE_DOUBLE = 1 << 1, // 0010
+    TYPE_STRING = 1 << 2, // 0100
+    TYPE_END    = TYPE_STRING, 
 
-    TYPE_NUM = TYPE_INT|TYPE_DOUBLE, // 00011
-    TYPE_VAL = TYPE_NUM|TYPE_STRING, // 00111
-    TYPE_ALL = TYPE_VAL|TYPE_BLOCK,  // 01111
+    TYPE_NUM = TYPE_INT|TYPE_DOUBLE, // 0011
+    TYPE_VAL = TYPE_NUM|TYPE_STRING, // 0111
+    TYPE_ALL = TYPE_VAL,             // 0111
     TYPE_BOOL = TYPE_VAL // resolvable to boolean
 } JeruTypeID;
 
@@ -33,6 +32,8 @@ JeruType jeru_type_double(double value);
 JeruType jeru_type_string(char *string);
 bool jeru_true(JeruType *object);
 void free_jeru_type(JeruType *object);
+
+JeruType copy_jeru_type(JeruType *source);
 
 void print_jeru_type(JeruType *object);
 // For stack output. Prints all types. Translates newlines -> \n, etc.

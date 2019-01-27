@@ -116,6 +116,8 @@ Token parse_word() {
             return make_token(matches("f", 1, TOK_IF));
         case 'w':
             return make_token(matches("hile", 4, TOK_WHILE));
+        case 'r':
+            return make_token(matches("un", 2, TOK_RUN));
     }
 
     return make_token(TOK_WORD);
@@ -204,7 +206,7 @@ Token parse_string() {
     Token tok;
     tok.id = TOK_STRING;
     tok.lexeme.string = string;
-    tok.lexeme.length = scanner.end-scanner.start;
+    tok.lexeme.length = scanner.end-scanner.start+1;
     tok.line = scanner.line;
     scanner.end += 2;
     scanner.start = scanner.end;

@@ -46,13 +46,15 @@ void push_block(JeruVM *vm, JeruBlock block) {
     vector_push_back(vm->call_stack, block);
 }
 
-// This one's naive and assumes you know what you're doing
-JeruBlock *get_block_from(JeruVM *vm, size_t index) {
-    return ((vector_end(vm->call_stack)-1)-index);
+JeruBlock *get_block(JeruVM *vm) {
+    return vector_end(vm->call_stack)-1;
 }
 
-JeruBlock *get_block(JeruVM *vm) {
-    return get_block_from(vm, 0);
+// This one's naive and assumes you know what you're doing
+JeruBlock pop_block(JeruVM *vm) {
+    JeruBlock block = copy_jeru_block(get_block(vm));
+    vector_pop_back(vm->call_stack);
+    return block;
 }
 
 void delete_block(JeruVM *vm) {
@@ -73,6 +75,7 @@ bool stack_has_types(JeruVM *vm, JeruTypeID *types) {
         if (!check_type(vm, *types, index))
             return false;
     }
+    free(types-index);
 
     return true;
 }

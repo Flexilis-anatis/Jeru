@@ -13,7 +13,7 @@
     }
 #define STACK_MSG "Not enough space on stack for "
 
-JeruBlock parse_block(bool *eof_error, Token *scope) {
+JeruBlock parse_block(bool *eof_error, JeruBlock *scope) {
     *eof_error = false;
 
     Token *tok_list = NULL;
@@ -29,6 +29,7 @@ JeruBlock parse_block(bool *eof_error, Token *scope) {
                 ++nest_level; break;
             case TOK_BLOCK_END:
                 --nest_level; break;
+            default: break;
         }
 
         vector_push_back(tok_list, token);
@@ -50,10 +51,10 @@ bool jeru_exec(JeruVM *vm, JeruBlock *scope) {
     { \
         if (vector_size(vm->stack) < 2) \
             SET_ERROR(STACK_MSG name) \
-        JeruType *x_ptr = get_back_from(vm, 1),\
-                 *y_ptr = get_back(vm);\
         if (!stack_has_types(vm, jeru_id_list(2, TYPE_NUM, TYPE_NUM))) \
             SET_ERROR("Incorrect types on stack for " name) \
+        JeruType *x_ptr = get_back_from(vm, 1),\
+                 *y_ptr = get_back(vm);\
         if (promote(x_ptr, y_ptr, Normal) == ToFloat) { \
             double x = x_ptr->as.floating, y = y_ptr->as.floating; \
             delete_back(vm); delete_back(vm); \
@@ -119,9 +120,12 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
             push_data(vm, jeru_type_int(strtoll(token.lexeme.string, NULL, 10)));
             break;
 
-        case TOK_STRING:
-            push_data(vm, jeru_type_string(token.lexeme.string));
+        case TOK_STRING: {
+            char *new_string = malloc(token.lexeme.length + 1);
+            strcpy(new_string, token.lexeme.string);
+            push_data(vm, jeru_type_string(new_string));
             return true;
+        }
 
         case TOK_DOUBLE:
             push_data(vm, jeru_type_double(strtod(token.lexeme.string, NULL)));
@@ -137,6 +141,10 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
             if (!vector_size(vm->stack))
                 SET_ERROR(STACK_MSG "popping")
             delete_back(vm);
+            break;
+
+        case TOK_COPY:
+            push_data(vm, copy_jeru_type(get_back(vm)));
             break;
 
         case TOK_ADD:
@@ -158,6 +166,9 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
                 push_data(vm, jeru_type_int(x > y ? 1 : 0));
             )
 
+
+        // Everything below this point is based around code blocks
+
         case TOK_BLOCK_START: {
             bool eof_error;
             push_block(vm, parse_block(&eof_error, scope));
@@ -171,11 +182,15 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
             SET_ERROR("Unmatched ']'")
 
         case TOK_EXEC:
+        case TOK_RUN: {
             if (!vector_size(vm->call_stack))
                 SET_ERROR("Nothing to execute");
 
-            JeruBlock block = copy_jeru_block(get_block(vm));
-            delete_block(vm);
+            JeruBlock block;
+            if (token.id == TOK_EXEC)
+                block = pop_block(vm);
+            else
+                block = copy_jeru_block(get_block(vm));
 
             if (!jeru_exec(vm, &block))
                 return false;
@@ -183,9 +198,97 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
             free_jeru_block(block);
             
             break;
+        }
 
-        default:
-            SET_ERROR("Unimplemented feature.");
+        // Control flow
+
+        case TOK_IF: {
+            if (!vector_size(vm->call_stack))
+                SET_ERROR("Nothing to execute in if statement");
+            if (!vector_size(vm->stack))
+                SET_ERROR(STACK_MSG "if statement");
+            if (!stack_has_types(vm, jeru_id_list(1, TYPE_BOOL)))
+                SET_ERROR("Need a boolean-convertible type on stack for if statement");
+
+            JeruType *cond = get_back(vm);
+            if (jeru_true(cond)) {
+                delete_back(vm);
+                JeruBlock block = pop_block(vm);
+
+                if (!jeru_exec(vm, &block))
+                    return false;
+
+                free_jeru_block(block);
+            } else {
+                delete_back(vm);
+            }
+            break;
+        }
+
+        case TOK_IFELSE: {
+            if (vector_size(vm->call_stack) < 2)
+                SET_ERROR("Not enough blocks to execute if-else statement");
+            if (!vector_size(vm->stack))
+                SET_ERROR(STACK_MSG "if-else statement");
+            if (!stack_has_types(vm, jeru_id_list(1, TYPE_BOOL)))
+                SET_ERROR("Need a boolean-convertible type on stack for if-else statement");
+
+            JeruType *cond = get_back(vm);
+            JeruBlock block_false = pop_block(vm);
+            JeruBlock block_true = pop_block(vm);
+
+            if (jeru_true(cond)) {
+                delete_back(vm);
+                if (!jeru_exec(vm, &block_true)) {
+                    free_jeru_block(block_false);
+                    free_jeru_block(block_true);
+                    return false;
+                }
+            } else {
+                delete_back(vm);
+                if (!jeru_exec(vm, &block_false)) {
+                    free_jeru_block(block_false);
+                    free_jeru_block(block_true);
+                    return false;
+                }
+            }
+
+            free_jeru_block(block_false);
+            free_jeru_block(block_true);
+
+            break;
+        }
+
+        case TOK_WHILE: {
+            if (!vector_size(vm->call_stack))
+                SET_ERROR("Nothing to execute in if statement");
+            if (!vector_size(vm->stack))
+                SET_ERROR(STACK_MSG "if statement");
+            
+            JeruBlock block = pop_block(vm);
+            JeruType *cond = NULL;
+
+            do {
+                if (cond)
+                    delete_back(vm);
+                block.instruct = 0;
+                if (!jeru_exec(vm, &block)) {
+                    free_jeru_block(block);
+                    return false;
+                }
+                if (!stack_has_types(vm, jeru_id_list(1, TYPE_BOOL)))
+                    SET_ERROR("Need a boolean-convertible type on stack for if statement");
+                cond = get_back(vm);
+            } while (jeru_true(cond));
+
+            delete_back(vm);
+            free_jeru_block(block);
+
+            break;
+        }
+
+        case TOK_WORD:
+            SET_ERROR("Words are unimplemented");
     }
 
     if (!scope)

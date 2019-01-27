@@ -5,7 +5,7 @@ typedef enum {
     TOK_INT, TOK_DOUBLE, TOK_STRING, TOK_WORD,
     // Magic
     TOK_ADD, TOK_SUB, TOK_MUL, TOK_DIV, TOK_PRINT, TOK_EXEC, TOK_COPY, TOK_POP,
-    TOK_GT, TOK_LT,
+    TOK_GT, TOK_LT, TOK_RUN,
     // "Statements" (in most langs)
     TOK_IF, TOK_IFELSE, TOK_WHILE,
     // Block

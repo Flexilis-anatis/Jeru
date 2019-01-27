@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 
 JeruType jeru_type(JeruTypeID id) {
     JeruType type;
@@ -28,6 +29,19 @@ void free_jeru_type(JeruType *object) {
     }
 }
 
+JeruType copy_jeru_type(JeruType *source) {
+    JeruType new;
+    new.id = source->id;
+    if (source->id == TYPE_STRING) {
+        new.as.string = malloc(strlen(source->as.string) + 1);
+        strcpy(new.as.string, source->as.string);
+    } else {
+        // Just to copy the bits over
+        new.as.floating = source->as.floating;
+    }
+    return new;
+}
+
 void print_jeru_type(JeruType *object) {
     switch (object->id) {
         case TYPE_DOUBLE:
@@ -38,9 +52,6 @@ void print_jeru_type(JeruType *object) {
             break;
         case TYPE_STRING:
             printf("%s", object->as.string);
-            break;
-        case TYPE_BLOCK:
-            printf("{...}");
             break;
     }
 }
@@ -83,9 +94,9 @@ bool jeru_true(JeruType *object) {
             return object->as.floating != 0;
         case TYPE_STRING:
             return *object->as.string != '\0';
+        default:
+            return false;
     }
-
-    return false;
 }
 
 JeruTypeID *jeru_id_list(size_t items, ...) {

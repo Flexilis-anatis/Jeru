@@ -27,10 +27,11 @@ JeruType *get_back(JeruVM *vm);
 // Deallocates the last item of the stack. Returns false if there's nothing to delete
 bool delete_back(JeruVM *vm);
 
-// These map to the last 4 functions, but with the call stack
 void push_block(JeruVM *vm, JeruBlock block);
-JeruBlock *get_block_from(JeruVM *vm, size_t index);
 JeruBlock *get_block(JeruVM *vm);
+// Returns a copy. You have to call free_jeru_block on it. Note that does NOT return a
+// malloc'd pointer, it just contains malloc'd elements
+JeruBlock pop_block(JeruVM *vm); 
 void delete_block(JeruVM *vm);
 
 // This one's a whopper... given a 0-terminated list of types, make sure the stack has
