@@ -4,14 +4,18 @@
 A toy language I'm making. Here's an example of a fibbonacci calculator! (disclaimer: doesn't work yet)
 
 ```Forth
-word fibo(int)
+[
     [
         copy 1 - fibo *
-    ] 1 < if
-end
+    ] 2 < if
+] word (int) fibo
+```
+Alt. without newlines:
+```Forth
+[ [ copy 1 - fibo * ] 2 < if ] word (int) fibo
 ```
 If you called this word with `3 fibo` the stack would progress as follows:
-```
+```Python
 [3] # about to call fibo
 [3, 3, 1] # copys top of stack and pushes one
 [3, 2] # subtracts one from the stack
@@ -20,4 +24,19 @@ If you called this word with `3 fibo` the stack would progress as follows:
 [3, 2, 1] # multiplies 2*1
 [3, 2] # multiplies 3*2
 [6] # result!
+```
+
+This is approx. equivilent to the following python code:
+
+```Python
+def fibo(n: int):
+    if n < 2: # or n <= 1
+        return 1
+    return fibo(n-1) * n
+```
+
+Alt. without newlines (or type annotation):
+
+```Python
+fibo = lambda n : 1 if n < 2 else fibo(n-1) * n
 ```
