@@ -1,7 +1,7 @@
 #!/usr/bin/jeru
 #
 
-0 #pushes 0 to the stack. this will be out accumulator#
+0 #pushes 0 to the stack. this will be our accumulator#
 [
 	1 + #incs accumulator#
 	print #prints the accumulator#

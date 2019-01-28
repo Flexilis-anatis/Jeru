@@ -287,7 +287,7 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
             break;
         }
 
-        case TOK_WORD:
+        case TOK_WORD_CALL: case TOK_WORD:
             SET_ERROR("Words are unimplemented");
     }
 

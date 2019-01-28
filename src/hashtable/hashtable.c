@@ -45,13 +45,13 @@ struct hash_entry {
 /// @param value A pointer to the value.
 /// @param value_size The size of the value in bytes.
 /// @returns A pointer to the hash entry.
-hash_entry *he_create(int flags, void *key, size_t key_size, void *value,
+hash_entry *he_create(void *key, size_t key_size, void *value,
         size_t value_size);
 
 /// @brief Destroys the hash entry and frees all associated memory.
 /// @param flags The hash table flags.
 /// @param hash_entry A pointer to the hash entry.
-void he_destroy(int flags, hash_entry *entry);
+void he_destroy(hash_entry *entry);
 
 /// @brief Compare two hash entries.
 /// @param e1 A pointer to the first entry.
@@ -65,7 +65,7 @@ int he_key_compare(hash_entry *e1, hash_entry *e2);
 /// @param entry A pointer to the hash entry.
 /// @param value A pointer to the new value.
 /// @param value_size The size of the new value in bytes.
-void he_set_value(int flags, hash_entry *entry, void *value, size_t value_size);
+void he_set_value(hash_entry *entry, void *value, size_t value_size);
 
 //-----------------------------------
 // HashTable functions
@@ -82,7 +82,6 @@ void ht_init(hash_table *table, double max_load_factor)
 
     table->key_count            = 0;
     table->collisions           = 0;
-    table->flags                = 0;
     table->max_load_factor      = max_load_factor;
     table->current_load_factor  = 0.0;
 
@@ -107,7 +106,7 @@ void ht_destroy(hash_table *table)
 
         while(entry != NULL) {
             tmp = entry->next;
-            he_destroy(table->flags, entry);
+            he_destroy(entry);
             entry = tmp;
         }
     }
@@ -122,9 +121,9 @@ void ht_destroy(hash_table *table)
     table->array = NULL;
 }
 
-void ht_insert(hash_table *table, char *key, size_t key_size, JeruType *block)
+void ht_insert(hash_table *table, char *key, size_t key_size, JeruBlock *block)
 {
-    hash_entry *entry = he_create(table->flags, key, key_size, block, sizeof(JeruType));
+    hash_entry *entry = he_create(key, key_size, block, sizeof(JeruBlock));
 
     ht_insert_he(table, entry);
 }
@@ -162,8 +161,8 @@ void ht_insert_he(hash_table *table, hash_entry *entry){
     {
         // if the keys are identical, throw away the old entry
         // and stick the new one into the table
-        he_set_value(table->flags, tmp, entry->value, entry->value_size);
-        he_destroy(table->flags, entry);
+        he_set_value(tmp, entry->value, entry->value_size);
+        he_destroy(entry);
     }
     else
     {
@@ -175,8 +174,7 @@ void ht_insert_he(hash_table *table, hash_entry *entry){
 
         // double the size of the table if autoresize is on and the
         // load factor has gone too high
-        if(!(table->flags & HT_NO_AUTORESIZE) &&
-                (table->current_load_factor > table->max_load_factor)) {
+        if(table->current_load_factor > table->max_load_factor) {
             ht_resize(table, table->array_size * 2);
             table->current_load_factor =
                 (double)table->collisions / table->array_size;
@@ -235,7 +233,7 @@ void ht_remove(hash_table *table, char *key, size_t key_size)
             if(prev != NULL)
               table->collisions--;
 
-            he_destroy(table->flags, entry);
+            he_destroy(entry);
             return;
         }
         else
@@ -332,7 +330,6 @@ void ht_resize(hash_table *table, unsigned int new_size)
     new_table.array = malloc(new_size * sizeof(hash_entry*));
     new_table.key_count = 0;
     new_table.collisions = 0;
-    new_table.flags = table->flags;
     new_table.max_load_factor = table->max_load_factor;
 
     unsigned int i;
@@ -375,7 +372,7 @@ void ht_set_seed(uint32_t seed){
 // hash_entry functions
 //---------------------------------
 
-hash_entry *he_create(int flags, void *key, size_t key_size, void *value,
+hash_entry *he_create(void *key, size_t key_size, void *value,
         size_t value_size)
 {
     hash_entry *entry = malloc(sizeof(*entry));
@@ -384,10 +381,7 @@ hash_entry *he_create(int flags, void *key, size_t key_size, void *value,
     }
 
     entry->key_size = key_size;
-    if (flags & HT_KEY_CONST){
-        entry->key = key;
-    }
-    else {
+    {
         entry->key = malloc(key_size);
         if(entry->key == NULL) {
             free(entry);
@@ -397,10 +391,7 @@ hash_entry *he_create(int flags, void *key, size_t key_size, void *value,
     }
 
     entry->value_size = value_size;
-    if (flags & HT_VALUE_CONST){
-        entry->value = value;
-    }
-    else {
+    {
         entry->value = malloc(value_size);
         if(entry->value == NULL) {
             free(entry->key);
@@ -415,12 +406,10 @@ hash_entry *he_create(int flags, void *key, size_t key_size, void *value,
     return entry;
 }
 
-void he_destroy(int flags, hash_entry *entry)
+void he_destroy(hash_entry *entry)
 {
-    if (!(flags & HT_KEY_CONST))
-        free(entry->key);
-    if (!(flags & HT_VALUE_CONST))
-        free(entry->value);
+    free(entry->key);
+    free(entry->value);
     free(entry);
 }
 
@@ -435,9 +424,9 @@ int he_key_compare(hash_entry *e1, hash_entry *e2)
     return (memcmp(k1,k2,e1->key_size) == 0);
 }
 
-void he_set_value(int flags, hash_entry *entry, void *value, size_t value_size)
+void he_set_value(hash_entry *entry, void *value, size_t value_size)
 {
-    if (!(flags & HT_VALUE_CONST)) {
+    {
         if(entry->value)
             free(entry->value);
 
@@ -446,8 +435,6 @@ void he_set_value(int flags, hash_entry *entry, void *value, size_t value_size)
             return;
         }
         memcpy(entry->value, value, value_size);
-    } else {
-        entry->value = value;
     }
     entry->value_size = value_size;
 

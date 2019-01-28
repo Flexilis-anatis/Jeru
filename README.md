@@ -8,11 +8,11 @@ A toy language I'm making. Here's an example of a fibbonacci calculator! (discla
     [
         copy 1 - fibo *
     ] 2 < if
-] word (int) fibo
+] word fibo
 ```
 Alt. without newlines:
 ```Forth
-[ [ copy 1 - fibo * ] 2 < if ] word (int) fibo
+[ [ copy 1 - fibo * ] 2 < if ] word fibo
 ```
 If you called this word with `3 fibo` the stack would progress as follows:
 ```Python
@@ -29,13 +29,13 @@ If you called this word with `3 fibo` the stack would progress as follows:
 This is approx. equivilent to the following python code:
 
 ```Python
-def fibo(n: int):
+def fibo(n):
     if n < 2: # or n <= 1
         return 1
     return fibo(n-1) * n
 ```
 
-Alt. without newlines (or type annotation):
+Alt. without newlines:
 
 ```Python
 fibo = lambda n : 1 if n < 2 else fibo(n-1) * n

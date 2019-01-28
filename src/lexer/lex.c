@@ -64,13 +64,13 @@ Token make_signal(TokenID signal, char *message) {
 }
 
 // Checks to see if a full string matches. Takes token_type to shorten
-// short-circuit returns. It returns TOK_WORDif not equal.
+// short-circuit returns. It returns TOK_WORD_CALL if not equal.
 TokenID matches(const char *string, unsigned int length, TokenID type) {
     // Sees if the string matches what's in the scanner
     if (scanner.end - scanner.start == 1 + length &&
         memcmp(scanner.start + 1, string, length) == 0)
         return type; // found
-    return TOK_WORD; // not found
+    return TOK_WORD_CALL; // not found
 }
 
 Token parse_word() {
@@ -115,12 +115,14 @@ Token parse_word() {
                 return make_token(matches("felse", 5, TOK_IFELSE));
             return make_token(matches("f", 1, TOK_IF));
         case 'w':
+            if (start_offset(1) == 'o')
+                return make_token(matches("ord", 3, TOK_WORD));
             return make_token(matches("hile", 4, TOK_WHILE));
         case 'r':
             return make_token(matches("un", 2, TOK_RUN));
     }
 
-    return make_token(TOK_WORD);
+    return make_token(TOK_WORD_CALL);
 }
 
 Token parse_number() {

@@ -2,11 +2,13 @@
 #include "jerutype.h"
 #include "lexer/lex.h"
 #include "lexer/block.h"
+#include "hashtable/hashtable.h"
 #include <stdbool.h>
 
 typedef struct {
     JeruType *stack;
     JeruBlock *call_stack;
+    hash_table *words;
     struct {
         bool exists;
         unsigned long line;
