@@ -144,6 +144,8 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
             break;
 
         case TOK_COPY:
+            if (!vector_size(vm->stack))
+                SET_ERROR(STACK_MSG "copying")
             push_data(vm, copy_jeru_type(get_back(vm)));
             break;
 
@@ -211,17 +213,15 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
                 SET_ERROR("Need a boolean-convertible type on stack for if statement");
 
             JeruType *cond = get_back(vm);
+            JeruBlock block = pop_block(vm);
             if (jeru_true(cond)) {
                 delete_back(vm);
-                JeruBlock block = pop_block(vm);
-
                 if (!jeru_exec(vm, &block))
                     return false;
-
-                free_jeru_block(block);
             } else {
                 delete_back(vm);
             }
+            free_jeru_block(block);
             break;
         }
 
@@ -294,11 +294,6 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
             if (word.id != TOK_WORD_CALL)
                 SET_ERROR("No word name after 'word' keyword");
 
-            if (ht_contains(vm->words, word.lexeme.string, word.lexeme.length)) {
-                free_jeru_block(*ht_get(vm->words, word.lexeme.string, word.lexeme.length));
-                ht_remove(vm->words, word.lexeme.string, word.lexeme.length);
-            }
-
             JeruBlock *block = malloc(sizeof(JeruBlock));
             JeruBlock tmp = copy_jeru_block(get_block(vm));
             memcpy(block, &tmp, sizeof(JeruBlock));
@@ -312,9 +307,11 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
             if (block == NULL)
                 SET_ERROR("Unrecognized word");
             
-            if (!jeru_exec(vm, block))
+            JeruBlock tmp = copy_jeru_block(block);
+            tmp.instruct = 0;
+            if (!jeru_exec(vm, &tmp))
                 return false;
-            block->instruct = 0;
+            free_jeru_block(tmp);
 
             break;
         }

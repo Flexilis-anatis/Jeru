@@ -1,11 +1,32 @@
 #!/usr/bin/jeru
 #
 
-0 #pushes 0 to the stack. this will be our accumulator#
+# Stack does the following:
+	[3] enter into fibo
+	[3, 3, 1] copy and push 1
+	[3, 1] test >
+	[3] run code block
+	[3, 3] copy
+	[3, 3, 1] push 1
+	[3, 2] subtract
+	[3, 2, 2, 1] re-enter into fibo: copy and push 1
+	[3, 2, 1] test >
+	[3, 2] enter code block
+	[3, 2, 2] copy
+	[3, 2, 2, 1] push 1
+	[3, 2, 1] subtract
+	[3, 2, 1, 1] re-enter into fibo: copy
+	[3, 2, 1, 1, 1] push 1
+	[3, 2, 1, 0] test >
+	[3, 2, 1] do NOT run code block
+	[3, 2] multiply
+	[6] multiply
+#
+
 [
-	1 + #incs accumulator#
-	print #prints the accumulator#
-	"\n" print pop
-	copy 10 < #tests if (a copy of) the acc. is less than 10#
-] while #more like a dowhile loop in C terms.
-         Runs the block until top of stack is falsey#
+    [
+        copy 1 - fibo *
+    ] copy 1 > if
+] word fibo
+
+3 fibo print
