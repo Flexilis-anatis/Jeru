@@ -7,6 +7,8 @@
 #define LOGARITHMIC_GROWTH
 #include "../vector/vector.h"
 
+#define VECTOR_BOILER_SIZE (sizeof(size_t) * 2)
+
 void run_repl() {
     printf("Welcome to the Jeru REPL");
     bool first_iter = true;
@@ -23,29 +25,40 @@ void run_repl() {
         input = readline("\n>>> ");
 
         JeruType *stack_copy = NULL;
-        size_t size = 0;
         if (vm->stack) {
-            size = (sizeof(size_t) * 2);
-            stack_copy = malloc((vector_capacity(vm->stack) * sizeof(JeruType)) + size);
-            memcpy(stack_copy, &((size_t *)vm->stack)[-2], size);
+            stack_copy = malloc((vector_capacity(vm->stack) * sizeof(JeruType))\
+                                 + VECTOR_BOILER_SIZE);
+
+            // Copying capacity and size over
+            memcpy(stack_copy, &((size_t *)vm->stack)[-2], VECTOR_BOILER_SIZE);
+            // Restoring standard array indexing
             stack_copy = (JeruType *)&((size_t *)stack_copy)[2];
+            // Copying over old data
             for (size_t index = 0; index < vector_size(vm->stack); ++index)
                 stack_copy[index] = copy_jeru_type(&vm->stack[index]);
         }
 
         JeruBlock *call_stack_copy = NULL;
-        size_t call_size = 0;
         if (vm->call_stack) {
-            call_size = (sizeof(size_t) * 2);
-            call_stack_copy = malloc((vector_capacity(vm->call_stack) * sizeof(JeruBlock)) + call_size);
-            memcpy(call_stack_copy, &((size_t *)vm->call_stack)[-2], call_size);
+            // Basically the same as previous steps, but with JeruBlock instead
+            // of JeruType
+            call_stack_copy = malloc((vector_capacity(vm->call_stack) *
+                                      sizeof(JeruBlock)) + VECTOR_BOILER_SIZE);
+
+            memcpy(call_stack_copy, &((size_t *)vm->call_stack)[-2],
+                   VECTOR_BOILER_SIZE);
             call_stack_copy = (JeruType *)&((size_t *)call_stack_copy)[2];
             for (size_t index = 0; index < vector_size(vm->call_stack); ++index)
                 call_stack_copy[index] = copy_jeru_block(&vm->call_stack[index]);
         }
 
-        add_history(input);
-        set_source(input);
+        if (*input == '?') {
+            add_history(input+1);
+            set_source(input+1);
+        } else {
+            set_source(input);
+        }
+
 
         while (run_next_token(vm, NULL));
 
