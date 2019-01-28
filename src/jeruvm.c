@@ -7,6 +7,9 @@ JeruVM *init_vm(void) {
     vm->stack = NULL;
     vm->call_stack = NULL;
     vm->error.exists = false;
+    vm->words = malloc(sizeof(hash_table));
+    // Not sure what best load factor is
+    ht_init(vm->words, 0.3);
     return vm;
 }
 
@@ -17,6 +20,7 @@ void free_vm(JeruVM *vm) {
         free_jeru_block(vm->call_stack[index]);
     vector_free(vm->call_stack);
     vector_free(vm->stack);
+    ht_destroy(vm->words);
     free(vm);
 }
 

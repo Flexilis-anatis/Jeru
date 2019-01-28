@@ -52,6 +52,10 @@ void run_repl() {
                 call_stack_copy[index] = copy_jeru_block(&vm->call_stack[index]);
         }
 
+        hash_table *word_copy = malloc(sizeof(hash_table));
+        hash_table tmp = ht_copy(vm->words);
+        memcpy(word_copy, &tmp, sizeof(hash_table));
+
         if (*input == '?') {
             add_history(input+1);
             set_source(input+1);
@@ -69,7 +73,7 @@ void run_repl() {
             free_vm(vm);
             vm = init_vm();
 
-            // Restore the stack
+            // Restore the stacks and word table
             if (stack_copy)
                 vm->stack = stack_copy;
             else
@@ -80,10 +84,13 @@ void run_repl() {
             else
                 vm->call_stack = NULL;
 
+            vm->words = word_copy;
+
             continue;
         } else {
             vector_free(stack_copy);
             vector_free(call_stack_copy);
+            ht_destroy(word_copy);
         }
 
         printf("\n[");

@@ -74,12 +74,16 @@ void ht_destroy(hash_table *table);
 /// @param key_size The size of the key in bytes.
 /// @param value A pointer to the value.
 /// @param value_size The size of the value in bytes.
-void ht_insert(hash_table *table, char *key, size_t key_size, JeruType *block);
+void ht_insert(hash_table *table, char *key, size_t key_size, JeruBlock *block);
 
 /// @brief Inserts an existing hash entry into the hash table.
 /// @param table A pointer to the hash table.
 /// @param entry A pointer to the hash entry.
 void ht_insert_he(hash_table *table, hash_entry *entry);
+
+/// @brief Copys the hash table and everything in it
+/// @param source A pointer to the tash table to copy
+hash_table ht_copy(hash_table *source);
 
 /// @brief Returns a pointer to the value with the matching key,
 ///         value_size is set to the size in bytes of the value

@@ -6,22 +6,24 @@
 #include "hashtable.h"
 #include "hashfunc.h"
 
+#include "../lexer/block.h"
+
 #include "murmur.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-uint32_t global_seed = 2976579765;
+uint32_t global_seed = 2976579735;
 
 
 /// The hash entry struct. Acts as a node in a linked list.
 struct hash_entry {
     /// A pointer to the key.
-    void *key;
+    char *key;
 
     /// A pointer to the value.
-    void *value;
+    JeruBlock *value;
 
     /// The size of the key in bytes.
     size_t key_size;
@@ -33,6 +35,34 @@ struct hash_entry {
     /// This is used for collision resolution.
     struct hash_entry *next;
 };
+
+hash_entry he_copy(hash_entry *source) {
+    hash_entry new_entry = *source;
+    new_entry.value = malloc(sizeof(JeruBlock));
+    JeruBlock tmp = copy_jeru_block(source->value);
+    memcpy(new_entry.value, &tmp, sizeof(JeruBlock));
+    if (new_entry.next) {
+        new_entry.next = malloc(sizeof(JeruBlock));
+        hash_entry tmp = he_copy(source->next);
+        memcpy(new_entry.next, &tmp, sizeof(hash_entry));
+    }
+    return new_entry;
+}
+
+hash_table ht_copy(hash_table *source) {
+    hash_table new = *source;
+    new.array = malloc(source->array_size * sizeof(JeruBlock));
+    for (unsigned int index = 0; index < source->array_size; ++index) {
+        if (source->array[index] == NULL) {
+            new.array[index] = NULL;
+            continue;
+        }
+        new.array[index] = malloc(sizeof(hash_entry));
+        hash_entry tmp = he_copy(source->array[index]);
+        memcpy(new.array[index], &tmp, sizeof(hash_entry));
+    }
+    return new;
+}
 
 //----------------------------------
 // HashEntry functions
