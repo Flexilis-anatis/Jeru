@@ -132,7 +132,7 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
             break;
 
         case TOK_PRINT:
-            if (!vector_size(vm->stack)) 
+            if (!vector_size(vm->stack))
                 SET_ERROR(STACK_MSG "printing");
             print_jeru_type(get_back(vm));
             break;
@@ -162,7 +162,7 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
                 push_data(vm, jeru_type_int(x < y ? 1 : 0));
             )
         case TOK_GT:
-            TYPELESS_NUMOP("greater than operation", 
+            TYPELESS_NUMOP("greater than operation",
                 push_data(vm, jeru_type_int(x > y ? 1 : 0));
             )
 
@@ -196,7 +196,7 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
                 return false;
 
             free_jeru_block(block);
-            
+
             break;
         }
 
@@ -264,7 +264,7 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
                 SET_ERROR("Nothing to execute in if statement");
             if (!vector_size(vm->stack))
                 SET_ERROR(STACK_MSG "if statement");
-            
+
             JeruBlock block = pop_block(vm);
             JeruType *cond = NULL;
 

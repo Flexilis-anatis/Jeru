@@ -39,6 +39,7 @@ void run_repl() {
             call_size = (sizeof(size_t) * 2);
             call_stack_copy = malloc((vector_capacity(vm->call_stack) * sizeof(JeruBlock)) + call_size);
             memcpy(call_stack_copy, &((size_t *)vm->call_stack)[-2], call_size);
+            call_stack_copy = (JeruType *)&((size_t *)call_stack_copy)[2];
             for (size_t index = 0; index < vector_size(vm->call_stack); ++index)
                 call_stack_copy[index] = copy_jeru_block(&vm->call_stack[index]);
         }
