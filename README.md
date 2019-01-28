@@ -34,9 +34,9 @@ If you called this word with `3 fibo` the stack would progress as follows:
 [3, 2, 1, 1] #re-enter into fibo: copy
 [3, 2, 1, 1, 1] #push 1
 [3, 2, 1, 0] #test >
-[3, 2, 1] #do NOT run code block
+[3, 2, 1] #do NOT run code block: multiply
 [3, 2] #multiply
-[6] #multiply
+[6] #resul!
 ```
 
 This is approx. equivilent to the following python code:
