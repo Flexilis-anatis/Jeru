@@ -287,8 +287,37 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
             break;
         }
 
-        case TOK_WORD_CALL: case TOK_WORD:
-            SET_ERROR("Words are unimplemented");
+        case TOK_WORD: {
+            if (!vector_size(vm->call_stack))
+                SET_ERROR("No code block to pop into word");
+            Token word = next_token(scope);
+            if (word.id != TOK_WORD_CALL)
+                SET_ERROR("No word name after 'word' keyword");
+
+            if (ht_contains(vm->words, word.lexeme.string, word.lexeme.length)) {
+                free_jeru_block(*ht_get(vm->words, word.lexeme.string, word.lexeme.length));
+                ht_remove(vm->words, word.lexeme.string, word.lexeme.length);
+            }
+
+            JeruBlock *block = malloc(sizeof(JeruBlock));
+            JeruBlock tmp = copy_jeru_block(get_block(vm));
+            memcpy(block, &tmp, sizeof(JeruBlock));
+            ht_insert(vm->words, word.lexeme.string, word.lexeme.length, block);
+            delete_block(vm);
+            return true;
+        }
+
+        case TOK_WORD_CALL: {
+            JeruBlock *block = ht_get(vm->words, token.lexeme.string, token.lexeme.length);
+            if (block == NULL)
+                SET_ERROR("Unrecognized word");
+            
+            if (!jeru_exec(vm, block))
+                return false;
+            block->instruct = 0;
+
+            break;
+        }
     }
 
     if (!scope)

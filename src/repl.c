@@ -90,7 +90,7 @@ void run_repl() {
         } else {
             vector_free(stack_copy);
             vector_free(call_stack_copy);
-            ht_destroy(word_copy);
+            //ht_destroy(word_copy);
         }
 
         printf("\n[");

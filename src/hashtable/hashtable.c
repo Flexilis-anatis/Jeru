@@ -212,7 +212,7 @@ void ht_insert_he(hash_table *table, hash_entry *entry){
     }
 }
 
-void* ht_get(hash_table *table, char *key, size_t key_size)
+JeruBlock *ht_get(hash_table *table, char *key, size_t key_size)
 {
     unsigned int index  = ht_index(table, key, key_size);
     hash_entry *entry   = table->array[index];
@@ -339,7 +339,7 @@ void ht_clear(hash_table *table)
     ht_init(table, table->max_load_factor);
 }
 
-unsigned int ht_index(hash_table *table, void *key, size_t key_size)
+unsigned int ht_index(hash_table *table, char *key, size_t key_size)
 {
     uint32_t index;
     // 32 bits of murmur seems to fare pretty well

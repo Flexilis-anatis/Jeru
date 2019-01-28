@@ -94,7 +94,7 @@ hash_table ht_copy(hash_table *source);
 ///         value will be stored.
 /// @returns A pointer to the requested value. If the return value
 ///           is NULL, the requested key-value pair was not in the table.
-void* ht_get(hash_table *table, char *key, size_t key_size);
+JeruBlock *ht_get(hash_table *table, char *key, size_t key_size);
 
 /// @brief Removes the entry corresponding to the specified key from the hash table.
 /// @param table A pointer to the hash table.
@@ -132,7 +132,7 @@ void ht_clear(hash_table *table);
 /// @param key A pointer to the key.
 /// @param key_size The size of the key in bytes.
 /// @returns The index into the hash table's internal array.
-unsigned int ht_index(hash_table *table, void *key, size_t key_size);
+unsigned int ht_index(hash_table *table, char *key, size_t key_size);
 
 /// @brief Resizes the hash table's internal array. This operation is
 ///        _expensive_, however it can make an overfull table run faster
