@@ -1,1 +1,1 @@
-./make.sh && ./jeru.out "$*"
+./make.sh && ./jeru.out

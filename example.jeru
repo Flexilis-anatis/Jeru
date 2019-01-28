@@ -27,8 +27,8 @@
 
 [
     [
-        copy 1 - fibo *
-    ] copy 1 > if
+    	copy 1 - fibo *
+    ]   copy 1 > if
 ] word fibo
 
-3 fibo print
+7 fibo print

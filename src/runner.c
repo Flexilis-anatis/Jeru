@@ -104,6 +104,12 @@ TypePromo promote(JeruType *x, JeruType *y, TypePromo promotion_type) {
     return ToFloat;
 }
 
+void concat_jeru_strings(JeruType *string1, JeruType *string2) {
+    string1->as.string = realloc(string1->as.string,
+                         strlen(string1->as.string)+strlen(string2->as.string)+1);
+    strcat(string1->as.string, string2->as.string);
+}
+
 bool run_next_token(JeruVM *vm, JeruBlock *scope) {
     Token token = next_token(scope);
     if (token.id == SIG_EOF) {
@@ -150,11 +156,54 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
             break;
 
         case TOK_ADD:
-            NUMOP("addition", push_data(vm, jeru_type_double(x + y));, push_data(vm, jeru_type_int(x + y));)
+            if (vector_size(vm->stack) >= 2 &&
+                stack_has_types(vm, jeru_id_list(2, TYPE_STRING, TYPE_STRING))) {
+                JeruType *string2 = get_back(vm), *string1 = get_back_from(vm, 1);
+                concat_jeru_strings(string1, string2);
+                delete_back(vm); // second string
+                break;
+            } else {
+                NUMOP("addition", push_data(vm, jeru_type_double(x + y));, push_data(vm, jeru_type_int(x + y));)
+            }
         case TOK_SUB:
             NUMOP("subtraction", push_data(vm, jeru_type_double(x - y));, push_data(vm, jeru_type_int(x - y));)
         case TOK_MUL:
-            NUMOP("multiplication", push_data(vm, jeru_type_double(x * y));, push_data(vm, jeru_type_int(x * y));)
+            if (vector_size(vm->stack) >= 2) {
+                JeruType *number, *string;
+                if (get_back(vm)->id == TYPE_STRING &&
+                    get_back_from(vm, 1)->id == TYPE_INT) {
+                    string = get_back(vm);
+                    number = get_back_from(vm, 1);
+                } else if (get_back(vm)->id == TYPE_INT &&
+                           get_back_from(vm, 1)->id == TYPE_STRING) {
+                    string = get_back_from(vm, 1);
+                    number = get_back(vm);
+                } else {
+                    NUMOP("multiplication",
+                        push_data(vm, jeru_type_double(x * y));,
+                        push_data(vm, jeru_type_int(x * y));)
+                }
+
+                long long times = number->as.integer;
+                if (times < 0)
+                    SET_ERROR("Must multiply strings by a value >= 1");
+
+                char *orig = string->as.string;
+                string->as.string = malloc(strlen(string->as.string)*times+1);
+                string->as.string[0] = '\0';
+                while (times--)
+                    strcat(string->as.string, orig);
+                free(orig);
+                vector_set_size(vm->stack, vector_size(vm->stack)-2);
+                free_jeru_type(number);
+                push_data(vm, *string);
+                break;
+            }
+
+            NUMOP("multiplication",
+                push_data(vm, jeru_type_double(x * y));,
+                push_data(vm, jeru_type_int(x * y));)
+            break;
         case TOK_DIV:
             if (vector_size(vm->stack))
                 morph_type(get_back(vm), ToFloat);
