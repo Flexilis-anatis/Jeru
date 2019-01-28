@@ -12,7 +12,7 @@ A toy language I'm making. Here's an example of a fibbonacci calculator!
 ```
 Alt. without newlines:
 ```Forth
-[ [ copy 1 - fibo * ] 2 < if ] word fibo
+[ [ copy 1 - fibo * ] copy 1 > if ] word fibo
 ```
 If you called this word with `3 fibo` the stack would progress as follows:
 ```Python
