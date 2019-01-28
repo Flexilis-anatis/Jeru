@@ -43,7 +43,7 @@ This is approx. equivilent to the following python code:
 
 ```Python
 def fibo(n):
-    if n > 1: # or n <= 1
+    if n > 1:
         return fibo(n-1) * n
     return 1
 ```
