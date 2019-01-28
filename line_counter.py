@@ -2,7 +2,7 @@
 
 import os
 
-# traverse root directory, and list directories as dirs and files as files
+# Shamelessly copied and modified from stackoverflow
 total = 0
 for root, dirs, files in os.walk("."):
 	path = root.split(os.sep)
