@@ -28,6 +28,15 @@ char *read_file(char *filename)
     return buffer;
 }
 
+bool run(JeruVM *vm) {
+    while (run_next_token(vm, NULL));
+    if (vm->error.exists) {
+        printf("[line %li] Error: %s\n", vm->error.line, vm->error.message);
+        return false;
+    }
+    return true;
+}
+
 int main(int argc, char **argv) {
     if (argc == 1) {
         run_repl();
@@ -36,7 +45,7 @@ int main(int argc, char **argv) {
         for (int file_index = 1; file_index < argc; ++file_index) {
             char *file = read_file(argv[file_index]);
             set_source(file);
-            if (!run_next_token(vm, NULL)) {
+            if (!run(vm)) {
                 free(file);
                 free_vm(vm);
                 return -1;

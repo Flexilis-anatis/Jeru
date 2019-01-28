@@ -221,7 +221,7 @@ Token next_token(JeruBlock *scope) {
     }
 
     while (isspace(current())) {
-        if (*scanner.start == '\n')
+        if (*scanner.start == '\n') 
             ++scanner.line;
         scanner.start = ++scanner.end;
     }
