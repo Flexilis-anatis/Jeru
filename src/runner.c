@@ -248,13 +248,14 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope, bool nopop) {
             if (vector_size(vm->stack) < 2)
                 SET_ERROR(STACK_MSG "equality test")
             JeruType *x = get_back(vm), *y = get_back_from(vm, 1);
-            bool result;
-            if (x->id == TYPE_STRING || y->id == TYPE_STRING)
+            bool result = false;
+            if (x->id == TYPE_STRING && y->id == TYPE_STRING)
                 result = strcmp(x->as.string, y->as.string) == 0;
-            else if (promote(x, y, Normal) == ToFloat)
-                result = x->as.floating == y->as.floating;
-            else
-                result = x->as.integer == y->as.integer;
+            else if (((x->id & TYPE_NUM) != 0) && ((y->id & TYPE_NUM) != 0))
+                if (promote(x, y, Normal) == ToFloat)
+                    result = x->as.floating == y->as.floating;
+                else
+                    result = x->as.integer == y->as.integer;
             if (!nopop) {
                 delete_back(vm);
                 delete_back(vm);
