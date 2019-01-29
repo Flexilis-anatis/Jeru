@@ -88,7 +88,7 @@ If any of them contain the symbol `*`, it means it can be anything, including no
 When they are seperated by the `|` symbol instead of commas, it means either of them will suffice.
 
 ### 2.2.1 Number Operations
-Unless otherwise specified, these words perform standard number promotion[1.3].
+Unless otherwise specified, these words perform standard number promotion[1.4].
 
 `+ (int|float,int|float) -> (int|float)`: adds two numbers.
 
