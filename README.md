@@ -1,7 +1,8 @@
 # Jeru
 ### A Forth-based interpreted language
+#### Implements Jeru SPECv0.1
 
-A toy language I'm making. Here's an example of a fibbonacci calculator!
+The refrence implementation of a toy language I'm making. Here's an example of a fibbonacci calculator!
 
 ```Forth
 [

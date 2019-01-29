@@ -1,4 +1,4 @@
-# Specification for the Jeru Language
+# Specification for the Jeru Language v0.1
 
 ## 0 Common Definitions
 This is a list of general information refrenced without citations throught the specification.
@@ -89,6 +89,14 @@ When they are seperated by the `|` symbol instead of commas, it means either of 
 
 ### 2.2.1 Number Operations
 Unless otherwise specified, these words perform standard number promotion[1.3].
+
+Unless specified otherwise, if the special word `nopop` is used before one, like `nopop >=`, then they do not pop their operands and merely push the result to the stack. If `nopop` is applied to a non-conforming operator, the result is implementation defined.
+```
+3 2 > # stack is now [1] #
+2 nopop < # stack is now [1, 2, 0]. did not pop 1 and 2 from the stack #
+```
+
+
 `+ (int|float,int|float) -> (int|float)`: adds two numbers.
 
 `- (int|float,int|float) -> (int|float)`: subtracts two numbers
@@ -101,12 +109,28 @@ Unless otherwise specified, these words perform standard number promotion[1.3].
 
 `< (int|float,int|float) -> (int)`: pushes `1` to the stack if the first number is smaller than the second, `0` otherwise
 
+`>= (int|float,int|float) -> (int)`: pushes `1` to the stack if the first number is larger or equal to the second, `0` otherwise
+
+`<= (int|float,int|float) -> (int)`: pushes `1` to the stack if the first number is smaller or equal to the second, `0` otherwise
+
+`= (int|float|str,int|float|str) -> (int)`: 
+ - if the two items are `str`s and they contain the same characters, push `1`.
+ - If the two items are both `int`s or `float`s and equal, push `1` (e.g., `0 0.0 =` is `1`, even though they're mixed type).
+ - If none of the above are true, push `0`
+
+`floor (float) -> (int)`: reduces the given float to the smallest integer not more than the given float. `nopop` does not apply.
+
+`ceil (float) -> (int)`: raises the given float to the smallest integer not less than the given float. `nopop` does not apply.
 ### 2.2.2 Data Stack Operations
 `copy (int|float|str) -> (int|float|str,int|float|str)`: copies the item on top of the stack
 
 `pop (int|float|str) -> ()`: deletes the item on top of the stack
 
 `print (int|float|str) -> (int|float|str)`: prints the top of the stack and leaves it unchanged.
+
+`swaptop (int|float|str,int|float|str) -> (int|float|str,int|float|str)`: swaps the top of the stack
+
+`stacklog (*) -> (*)`: display the stack in a implementation defined manner.
 
 ### 2.2.3 Code Stack Operations
 `exec ()(1) -> (*)(0+)`: executes and deletes the top of the code stack

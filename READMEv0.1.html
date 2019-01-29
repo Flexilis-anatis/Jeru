@@ -1,5 +1,4 @@
-<!--A generated and partially touched-up file. Edit SPEC.md instead-->
-<h1>Specification for the Jeru Language</h1>
+<h1>Specification for the Jeru Language v0.1</h1>
 <h2>0 Common Definitions</h2>
 <p>This is a list of general information refrenced without citations throught the specification.</p>
 <h3>0.1 Stacks</h3>
@@ -29,7 +28,7 @@ gaurenteed to.</p>
 <p>A floating point literal contains exactly one decimal point (<code>.</code>) and optionally the numbers 0-9 on either or both sides of the decimal. If no numbers are present on the left or right sides of the decimal, 0 is assumed (<code>0.0</code> = <code>0.</code> = <code>.0</code> = <code>.</code>). Exponent notation, e.g. <code>12e+4</code>, is not be supported. Leading zero's may be allowed, but are not gaurenteed to. The first non-integer character terminates the reading of a number. No seperating whitespace is needed between the last character and the next token.</p>
 <p>An example of a valid float literal: <code>03.14159</code></p>
 <h4>1.2.3 Strings</h4>
-<p>A string literal is delimited by doubl quotes (<code>&quot;</code>), and can contain the following escape sequences:</p>
+<p>A string literal is delimited by double quotes (<code>&quot;</code>), and can contain the following escape sequences:</p>
 <p><!-- Yeah, yeah, tables are so 2006, I know. Most of this is generated from the markdown -->
     <table style="width:15%">
       <tr>
@@ -52,7 +51,8 @@ gaurenteed to.</p>
         <td>Backslash</td>
         <td align="center"><code>\\</code></td>
       </tr>
-    </table><p>No seperating whitespace is needed between the closing quote and the next token.</p>
+    </table></p>
+<p>No seperating whitespace is needed between the closing quote and the next token.</p>
 <h4>1.3 Code Blocks</h4>
 <p>Code blocks can only be pushed to the code stack. They are series of tokens delimited by the words(!) <code>[</code> and <code>]</code>. Note that they are words, not special symbols, so all the parsing rules in [2.1]
 apply. When they are encountered, they should be pushed directly to the code stack, NOT the data stack.</p>
@@ -81,17 +81,33 @@ the stack after the word has run.</p>
 <p>If any of them contain the symbol <code>*</code>, it means it can be anything, including nothing. If <code>(output blocks)</code> or <code>(input blocks)</code> contain the symbol <code>+</code>, it means it is at least the amount specified.</p>
 <p>When they are seperated by the <code>|</code> symbol instead of commas, it means either of them will suffice.</p>
 <h3>2.2.1 Number Operations</h3>
-<p>Unless otherwise specified, these words perform standard number promotion[1.3].
-<code>+ (int|float,int|float) -&gt; (int|float)</code>: adds two numbers.</p>
+<p>Unless otherwise specified, these words perform standard number promotion[1.3].</p>
+<p>Unless specified otherwise, if the special word <code>nopop</code> is used before one, like <code>nopop &gt;=</code>, then they do not pop their operands and merely push the result to the stack. If <code>nopop</code> is applied to a non-conforming operator, the result is implementation defined.</p>
+<pre><code>3 2 &gt; # stack is now [1] #
+2 nopop &lt; # stack is now [1, 2, 0]. did not pop 1 and 2 from the stack #
+</code></pre>
+<p><code>+ (int|float,int|float) -&gt; (int|float)</code>: adds two numbers.</p>
 <p><code>- (int|float,int|float) -&gt; (int|float)</code>: subtracts two numbers</p>
 <p><code>* (int|float,int|float) -&gt; (int|float)</code>: multiplies two numbers</p>
 <p><code>/ (int|float,int|float) -&gt; (float)</code>: divides two numbers. All operands are cast to floats.</p>
 <p><code>&gt; (int|float,int|float) -&gt; (int)</code>: pushes <code>1</code> to the stack if the first number is larger than the second, <code>0</code> otherwise</p>
 <p><code>&lt; (int|float,int|float) -&gt; (int)</code>: pushes <code>1</code> to the stack if the first number is smaller than the second, <code>0</code> otherwise</p>
+<p><code>&gt;= (int|float,int|float) -&gt; (int)</code>: pushes <code>1</code> to the stack if the first number is larger or equal to the second, <code>0</code> otherwise</p>
+<p><code>&lt;= (int|float,int|float) -&gt; (int)</code>: pushes <code>1</code> to the stack if the first number is smaller or equal to the second, <code>0</code> otherwise</p>
+<p><code>= (int|float|str,int|float|str) -&gt; (int)</code>:</p>
+<ul>
+<li>if the two items are <code>str</code>s and they contain the same characters, push <code>1</code>.</li>
+<li>If the two items are both <code>int</code>s or <code>float</code>s and equal, push <code>1</code> (e.g., <code>0 0.0 =</code> is <code>1</code>, even though they're mixed type).</li>
+<li>If none of the above are true, push <code>0</code></li>
+</ul>
+<p><code>floor (float) -&gt; (int)</code>: reduces the given float to the smallest integer not more than the given float. <code>nopop</code> does not apply.</p>
+<p><code>ceil (float) -&gt; (int)</code>: raises the given float to the smallest integer not less than the given float. <code>nopop</code> does not apply.</p>
 <h3>2.2.2 Data Stack Operations</h3>
 <p><code>copy (int|float|str) -&gt; (int|float|str,int|float|str)</code>: copies the item on top of the stack</p>
 <p><code>pop (int|float|str) -&gt; ()</code>: deletes the item on top of the stack</p>
 <p><code>print (int|float|str) -&gt; (int|float|str)</code>: prints the top of the stack and leaves it unchanged.</p>
+<p><code>swaptop (int|float|str,int|float|str) -&gt; (int|float|str,int|float|str)</code>: swaps the top of the stack</p>
+<p><code>stacklog (*) -&gt; (*)</code>: display the stack in a implementation defined manner.</p>
 <h3>2.2.3 Code Stack Operations</h3>
 <p><code>exec ()(1) -&gt; (*)(0+)</code>: executes and deletes the top of the code stack</p>
 <p><code>run ()(1) -&gt; (*)(1+)</code>: executes and maintains the top of the code stack</p>

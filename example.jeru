@@ -31,4 +31,4 @@
     ]   copy 1 > if
 ] word fibo
 
-7 fibo print
+20 fibo print
