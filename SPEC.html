@@ -1,4 +1,3 @@
-<!--A generated and partially touched-up file. Edit SPEC.md instead-->
 <h1>Specification for the Jeru Language</h1>
 <h2>0 Common Definitions</h2>
 <p>This is a list of general information refrenced without citations throught the specification.</p>
@@ -29,30 +28,31 @@ gaurenteed to.</p>
 <p>A floating point literal contains exactly one decimal point (<code>.</code>) and optionally the numbers 0-9 on either or both sides of the decimal. If no numbers are present on the left or right sides of the decimal, 0 is assumed (<code>0.0</code> = <code>0.</code> = <code>.0</code> = <code>.</code>). Exponent notation, e.g. <code>12e+4</code>, is not be supported. Leading zero's may be allowed, but are not gaurenteed to. The first non-integer character terminates the reading of a number. No seperating whitespace is needed between the last character and the next token.</p>
 <p>An example of a valid float literal: <code>03.14159</code></p>
 <h4>1.2.3 Strings</h4>
-<p>A string literal is delimited by doubl quotes (<code>&quot;</code>), and can contain the following escape sequences:</p>
+<p>A string literal is delimited by double quotes (<code>&quot;</code>), and can contain the following escape sequences:</p>
 <p><!-- Yeah, yeah, tables are so 2006, I know. Most of this is generated from the markdown -->
-    <table style="width:15%">
-      <tr>
-        <th>Name</th>
-        <th>Escape</th> 
-      </tr>
-      <tr>
-        <td>Newline</td>
-        <td align="center"><code>\n</code></td>
-      </tr>
-      <tr>
-        <td>Tab</td>
-        <td align="center"><code>\t</code></td>
-      </tr>
-      <tr>
-        <td>Double quote</td>
-        <td align="center"><code>\"</code></td>
-      </tr>
-      <tr>
-        <td>Backslash</td>
-        <td align="center"><code>\\</code></td>
-      </tr>
-    </table><p>No seperating whitespace is needed between the closing quote and the next token.</p>
+  <table style="width:15%">
+    <tr>
+      <th>Name</th>
+      <th>Escape</th> 
+    </tr>
+    <tr>
+      <td>Newline</td>
+      <td align="center"><code>\n</code></td>
+    </tr>
+    <tr>
+      <td>Tab</td>
+      <td align="center"><code>\t</code></td>
+    </tr>
+    <tr>
+      <td>Double quote</td>
+      <td align="center"><code>\"</code></td>
+    </tr>
+    <tr>
+      <td>Backslash</td>
+      <td align="center"><code>\\</code></td>
+    </tr>
+  </table></p>
+<p>No seperating whitespace is needed between the closing quote and the next token.</p>
 <h4>1.3 Code Blocks</h4>
 <p>Code blocks can only be pushed to the code stack. They are series of tokens delimited by the words(!) <code>[</code> and <code>]</code>. Note that they are words, not special symbols, so all the parsing rules in [2.1]
 apply. When they are encountered, they should be pushed directly to the code stack, NOT the data stack.</p>
@@ -99,6 +99,9 @@ the stack after the word has run.</p>
 <p><code>if (int|float|str)(1) -&gt; (*)(0+)</code>: checks if a condition is truthy[1.4]. If it is, run's code block.</p>
 <p><code>ifelse (int|float|str)(2) -&gt; (*)(0+)</code>: checks if a condition is truthy[1.4]. If it is, run's the first code block. Otherwise run's the second.</p>
 <p><code>while ()(1) -&gt; (*)(0+)</code>: runs the block until until the top of the stack is not truthy[1.4]. In C terms it's a do-while loop, as it always runs the code at least once.</p>
+<h3>2.2.5 String Operations</h3>
+<p><code>+ (string,string) -&gt; (string)</code>: concatenate two strings</p>
+<p><code>* (string|int,string|int) -&gt; (string)</code>: multiply a string by a number (E.G., <code>&quot;*&quot; 8 *</code> and <code>&quot;*******&quot;</code> are equivilant).</p>
 <h3>2.3 Syntactical Definition of Custom Words</h3>
 <p>Words can be defined with the following syntax:</p>
 <p><code>'[' (literal|word)* ']' 'word' word_name</code></p>

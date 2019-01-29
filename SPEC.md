@@ -120,6 +120,11 @@ Unless otherwise specified, these words perform standard number promotion[1.3].
 
 `while ()(1) -> (*)(0+)`: runs the block until until the top of the stack is not truthy[1.4]. In C terms it's a do-while loop, as it always runs the code at least once.
 
+### 2.2.5 String Operations
+`+ (string,string) -> (string)`: concatenate two strings
+
+`* (string|int,string|int) -> (string)`: multiply a string by a number (E.G., `"*" 8 *` and `"*******"` are equivilant).
+
 ### 2.3 Syntactical Definition of Custom Words
 Words can be defined with the following syntax:
 
