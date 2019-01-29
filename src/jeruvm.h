@@ -18,6 +18,7 @@ typedef struct {
 
 JeruVM *init_vm(void);
 void free_vm(JeruVM *vm);
+void print_stack(JeruVM *vm);
 
 void push_data(JeruVM *vm, JeruType item);
 
@@ -33,7 +34,7 @@ void push_block(JeruVM *vm, JeruBlock block);
 JeruBlock *get_block(JeruVM *vm);
 // Returns a copy. You have to call free_jeru_block on it. Note that does NOT return a
 // malloc'd pointer, it just contains malloc'd elements
-JeruBlock pop_block(JeruVM *vm); 
+JeruBlock pop_block(JeruVM *vm);
 void delete_block(JeruVM *vm);
 
 // This one's a whopper... given a 0-terminated list of types, make sure the stack has

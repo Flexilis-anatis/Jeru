@@ -42,7 +42,7 @@ JeruBlock parse_block(bool *eof_error, JeruBlock *scope) {
 
 bool jeru_exec(JeruVM *vm, JeruBlock *scope) {
     while (scope->instruct < vector_size(scope->tokens))
-        if (!run_next_token(vm, scope))
+        if (!run_next_token(vm, scope, false))
             return false;
     return true;
 }
@@ -57,11 +57,11 @@ bool jeru_exec(JeruVM *vm, JeruBlock *scope) {
                  *y_ptr = get_back(vm);\
         if (promote(x_ptr, y_ptr, Normal) == ToFloat) { \
             double x = x_ptr->as.floating, y = y_ptr->as.floating; \
-            delete_back(vm); delete_back(vm); \
+            if (!nopop) {delete_back(vm); delete_back(vm);} \
             floatcode \
         } else { \
             long long x = x_ptr->as.integer, y = y_ptr->as.integer; \
-            delete_back(vm); delete_back(vm); \
+            if (!nopop) {delete_back(vm); delete_back(vm);} \
             intcode \
         } \
         break; \
@@ -110,7 +110,7 @@ void concat_jeru_strings(JeruType *string1, JeruType *string2) {
     strcat(string1->as.string, string2->as.string);
 }
 
-bool run_next_token(JeruVM *vm, JeruBlock *scope) {
+bool run_next_token(JeruVM *vm, JeruBlock *scope, bool nopop) {
     Token token = next_token(scope);
     if (token.id == SIG_EOF) {
         return vm->error.exists = false;
@@ -137,10 +137,25 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
             push_data(vm, jeru_type_double(strtod(token.lexeme.string, NULL)));
             break;
 
+        case TOK_NOPOP:
+            return run_next_token(vm, scope, true);
+
         case TOK_PRINT:
             if (!vector_size(vm->stack))
                 SET_ERROR(STACK_MSG "printing");
             print_jeru_type(get_back(vm));
+            break;
+
+        case TOK_STACKLOG:
+            print_stack(vm);
+            break;
+
+        case TOK_SWAPTOP:
+            if (vector_size(vm->stack) < 2)
+                SET_ERROR(STACK_MSG "swapping");
+            JeruType tmp = *get_back(vm);
+            vm->stack[vector_size(vm->stack)-1] = *get_back_from(vm, 1);
+            vm->stack[vector_size(vm->stack)-2] = tmp;
             break;
 
         case TOK_POP:
@@ -215,6 +230,18 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
         case TOK_GT:
             TYPELESS_NUMOP("greater than operation",
                 push_data(vm, jeru_type_int(x > y ? 1 : 0));
+            )
+        case TOK_LTE:
+            TYPELESS_NUMOP("less-equal to operation",
+                push_data(vm, jeru_type_int(x <= y ? 1 : 0));
+            )
+        case TOK_GTE:
+            TYPELESS_NUMOP("greater-equal to operation",
+                push_data(vm, jeru_type_int(x >= y ? 1 : 0));
+            )
+        case TOK_EQUALS:
+            TYPELESS_NUMOP("equals operation",
+                push_data(vm, jeru_type_int(x == y ? 1 : 0));
             )
 
 
@@ -355,7 +382,7 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
             JeruBlock *block = ht_get(vm->words, token.lexeme.string, token.lexeme.length);
             if (block == NULL)
                 SET_ERROR("Unrecognized word");
-            
+
             JeruBlock tmp = copy_jeru_block(block);
             tmp.instruct = 0;
             if (!jeru_exec(vm, &tmp))

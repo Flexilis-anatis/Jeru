@@ -29,7 +29,7 @@ char *read_file(char *filename)
 }
 
 bool run(JeruVM *vm) {
-    while (run_next_token(vm, NULL));
+    while (run_next_token(vm, NULL, false));
     if (vm->error.exists) {
         printf("[line %li] Error: %s\n", vm->error.line, vm->error.message);
         return false;

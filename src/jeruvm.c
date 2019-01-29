@@ -1,6 +1,7 @@
 #include "jeruvm.h"
 #define LOGARITHMIC_GROWTH
 #include "../vector/vector.h"
+#include <stdio.h>
 
 JeruVM *init_vm(void) {
     JeruVM *vm = malloc(sizeof(JeruVM));
@@ -22,6 +23,18 @@ void free_vm(JeruVM *vm) {
     vector_free(vm->stack);
     ht_destroy(vm->words);
     free(vm);
+}
+
+void print_stack(JeruVM *vm) {
+    printf("\n[");
+    for (size_t i = 0; i+1 < vector_size(vm->stack); ++i) {
+        print_jeru_clean(&vm->stack[i]);
+        printf(", ");
+    }
+    // Print last value if there is one
+    if (vector_size(vm->stack))
+        print_jeru_clean(&vm->stack[vector_size(vm->stack)-1]);
+    printf("], %lu", vector_size(vm->call_stack));
 }
 
 void push_data(JeruVM *vm, JeruType item) {

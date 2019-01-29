@@ -63,7 +63,7 @@ void run_repl() {
             set_source(input);
         }
 
-        while (run_next_token(vm, NULL));
+        while (run_next_token(vm, NULL, false));
 
         if (vm->error.exists) {
             vm->error.exists = false;
@@ -92,15 +92,7 @@ void run_repl() {
             ht_destroy(word_copy);
         }
 
-        printf("\n[");
-        for (size_t i = 0; i+1 < vector_size(vm->stack); ++i) {
-            print_jeru_clean(&vm->stack[i]);
-            printf(", ");
-        }
-        // Print last value if there is one
-        if (vector_size(vm->stack))
-            print_jeru_clean(&vm->stack[vector_size(vm->stack)-1]);
-        printf("], %lu", vector_size(vm->call_stack));
+        print_stack(vm);
     }
 
     free_vm(vm);

@@ -2,15 +2,50 @@
 #
 
 [
-    "*" *
+    "*" * "\n" +
 ] word stars
 
+[ 1 + ] word inc
+[ 1 - ] word dec
+
+#
+[3]
+[3, 1]
+[3, 2]
+#
+
 [
-    ""
+    # set up our acc #
+    1
     [
-        stars "\n" + +
-        copy 1 -
+        # print acc amount of stars #
+        copy stars print pop
+        # increase acc #
+        inc
+        # makes it so that it tests the numbers without popping them #
+        nopop >=
     ] while
+    pop pop # it's always good practice to pop any mess you made #
 ] word triangle
 
-5 triangle
+[
+    # set acc #
+    1
+    [
+        # switch to the original number #
+        swaptop
+          copy stars print pop # print the line of stars #
+        swaptop
+
+        # increment the acc and do the test #
+        inc nopop >=
+    ] while
+    pop pop # clean up #
+] word square
+
+[
+    copy triangle
+         square # cleans up for us #
+] word tower
+
+6 tower

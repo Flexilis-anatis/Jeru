@@ -73,7 +73,7 @@ TokenID matches(const char *string, unsigned int length, TokenID type) {
     return TOK_WORD_CALL; // not found
 }
 
-Token parse_word() {
+Token parse_word(void) {
     do
         advance();
     while (current() && !(isdigit(current()) || isspace(current())));
@@ -93,10 +93,12 @@ Token parse_word() {
                 return make_token(TOK_BLOCK_START);
             case ']':
                 return make_token(TOK_BLOCK_END);
-            case '>':
-                return make_token(TOK_GT);
+            case '=':
+                return make_token(TOK_EQUALS);
             case '<':
                 return make_token(TOK_LT);
+            case '>':
+                return make_token(TOK_GT);
         }
     }
 
@@ -120,6 +122,16 @@ Token parse_word() {
             return make_token(matches("hile", 4, TOK_WHILE));
         case 'r':
             return make_token(matches("un", 2, TOK_RUN));
+        case 's':
+            if (start_offset(1) == 't')
+                return make_token(matches("tacklog", 7, TOK_STACKLOG));
+            return make_token(matches("waptop", 6, TOK_SWAPTOP));
+        case 'n':
+            return make_token(matches("opop", 4, TOK_NOPOP));
+        case '>':
+            return make_token(matches("=", 1, TOK_GTE));
+        case '<':
+            return make_token(matches("=", 1, TOK_LTE));
     }
 
     return make_token(TOK_WORD_CALL);
@@ -144,9 +156,11 @@ Token parse_number() {
 }
 
 bool parse_out_comment() {
-    do
+    do {
         advance();
-    while (current() != '#' && !scanner_at_end());
+        if (current() == '\n')
+            ++scanner.line;
+    } while (current() != '#' && !scanner_at_end());
 
     if (scanner_at_end())
         return false;
