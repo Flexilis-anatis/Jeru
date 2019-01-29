@@ -89,6 +89,7 @@ When they are seperated by the `|` symbol instead of commas, it means either of 
 
 ### 2.2.1 Number Operations
 Unless otherwise specified, these words perform standard number promotion[1.3].
+
 `+ (int|float,int|float) -> (int|float)`: adds two numbers.
 
 `- (int|float,int|float) -> (int|float)`: subtracts two numbers
