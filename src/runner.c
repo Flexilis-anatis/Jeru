@@ -245,9 +245,23 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope, bool nopop) {
                 push_data(vm, jeru_type_int(x >= y ? 1 : 0));
             )
         case TOK_EQUALS:
-            TYPELESS_NUMOP("equals operation",
-                push_data(vm, jeru_type_int(x == y ? 1 : 0));
-            )
+            if (vector_size(vm->stack) < 2)
+                SET_ERROR(STACK_MSG "equality test")
+            JeruType *x = get_back(vm), *y = get_back_from(vm, 1);
+            bool result;
+            if (x->id == TYPE_STRING || y->id == TYPE_STRING)
+                result = strcmp(x->as.string, y->as.string) == 0;
+            else if (promote(x, y, Normal) == ToFloat)
+                result = x->as.floating == y->as.floating;
+            else
+                result = x->as.integer == y->as.integer;
+            if (!nopop) {
+                delete_back(vm);
+                delete_back(vm);
+            }
+            push_data(vm, jeru_type_int(result));
+            break;
+
         case TOK_FLOOR:
             if (!vector_size(vm->stack))
                 SET_ERROR(STACK_MSG "floor operation");
