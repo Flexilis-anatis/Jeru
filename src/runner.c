@@ -3,6 +3,7 @@
 #include "../vector/vector.h"
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #define SET_ERROR(msg) \
     { \
@@ -73,10 +74,14 @@ typedef enum {ToFloat, ToInt, Normal} TypePromo;
 void morph_type(JeruType *item, TypePromo type) {
     switch (type) {
         case ToFloat:
+            if (item->id == TYPE_DOUBLE)
+                break;
             item->id = TYPE_DOUBLE;
             item->as.floating = (double)item->as.integer;
             break;
         case ToInt:
+            if (item->id == TYPE_INT)
+                break;
             item->id = TYPE_INT;
             item->as.integer = (long long)item->as.floating;
             break;
@@ -243,7 +248,23 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope, bool nopop) {
             TYPELESS_NUMOP("equals operation",
                 push_data(vm, jeru_type_int(x == y ? 1 : 0));
             )
+        case TOK_FLOOR:
+            if (!vector_size(vm->stack))
+                SET_ERROR(STACK_MSG "floor operation");
+            if (!(get_back(vm)->id == TYPE_DOUBLE))
+                SET_ERROR("Floor only works on floats");
+            get_back(vm)->as.integer = (long long)get_back(vm)->as.floating;
+            get_back(vm)->id = TYPE_INT;
+            break;
 
+        case TOK_CEIL:
+            if (!vector_size(vm->stack))
+                SET_ERROR(STACK_MSG "floor operation");
+            if (!stack_has_types(vm, jeru_id_list(1, TYPE_DOUBLE)))
+                SET_ERROR("Ceil only works on floats");
+            get_back(vm)->as.integer = ceil(get_back(vm)->as.floating);
+            get_back(vm)->id = TYPE_INT;
+            break;
 
         // Everything below this point is based around code blocks
 

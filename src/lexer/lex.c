@@ -111,6 +111,8 @@ Token parse_word(void) {
         case 'e':
             return make_token(matches("xec", 3, TOK_EXEC));
         case 'c':
+            if (start_offset(1) == 'e')
+                return make_token(matches("eil", 3, TOK_CEIL));
             return make_token(matches("opy", 3, TOK_COPY));
         case 'i':
             if (start_offset(2) == 'e')
@@ -132,6 +134,8 @@ Token parse_word(void) {
             return make_token(matches("=", 1, TOK_GTE));
         case '<':
             return make_token(matches("=", 1, TOK_LTE));
+        case 'f':
+            return make_token(matches("loor", 4, TOK_FLOOR));
     }
 
     return make_token(TOK_WORD_CALL);

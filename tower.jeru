@@ -5,21 +5,31 @@
     "*" * "\n" +
 ] word stars
 
+# utils #
+# increments the top of the stack #
 [ 1 + ] word inc
-[ 1 - ] word dec
 
-#
-[3]
-[3, 1]
-[3, 2]
-#
+# decrements the top of the stack #
+[ 1 - ] word dec 
 
+# prints N stars and leaves it on the stack#
+[ copy stars print pop ] word print-stars 
+
+# define our units #
+# arbitrary. I chose 2 feet to 3 stars #
+[ 2 * ] word foot
+# converts into foot and then calls that #
+[ 3 * foot ] word yard
+
+# main words #
+
+# print a triangle of stars, with the smallest point at the top #
 [
     # set up our acc #
     1
     [
         # print acc amount of stars #
-        copy stars print pop
+        print-stars
         # increase acc #
         inc
         # makes it so that it tests the numbers without popping them #
@@ -34,7 +44,7 @@
     [
         # switch to the original number #
         swaptop
-          copy stars print pop # print the line of stars #
+          print-stars # print the line of stars #
         swaptop
 
         # increment the acc and do the test #
@@ -48,4 +58,4 @@
          square # cleans up for us #
 ] word tower
 
-6 tower
+1 yard 2 foot + tower
