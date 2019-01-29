@@ -4,4 +4,4 @@ files="$(find . -type f | grep -vE '\./\.git|\.gch' | grep '\.c' | sort -r | sed
 #                                 for murmur implementation
 warnings="-Wextra -Wall -pedantic -Wno-implicit-fallthrough"
 # Will pass args to gcc
-eval "gcc $files $warnings $* -std=c17 -lreadline -O2 -o jeru.out"
+eval "gcc $files $warnings $* -std=c17 -lreadline -lm -O2 -o jeru.out"

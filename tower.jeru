@@ -1,0 +1,61 @@
+#!/usr/bin/jeru
+#
+
+[
+    "*" * "\n" +
+] word stars
+
+# utils #
+# increments the top of the stack #
+[ 1 + ] word inc
+
+# decrements the top of the stack #
+[ 1 - ] word dec 
+
+# prints N stars and leaves it on the stack#
+[ copy stars print pop ] word print-stars 
+
+# define our units #
+# arbitrary. I chose 2 feet to 3 stars #
+[ 2 * ] word foot
+# converts into foot and then calls that #
+[ 3 * foot ] word yard
+
+# main words #
+
+# print a triangle of stars, with the smallest point at the top #
+[
+    # set up our acc #
+    1
+    [
+        # print acc amount of stars #
+        print-stars
+        # increase acc #
+        inc
+        # makes it so that it tests the numbers without popping them #
+        nopop >=
+    ] while
+    pop pop # it's always good practice to pop any mess you made #
+] word triangle
+
+[
+    # set acc #
+    1
+    [
+        # switch to the original number #
+        swaptop
+          print-stars # print the line of stars #
+        swaptop
+
+        # increment the acc and do the test #
+        inc nopop >=
+    ] while
+    pop pop # clean up #
+] word square
+
+[
+    copy triangle
+         square # cleans up for us #
+] word tower
+
+1 yard 2 foot + tower

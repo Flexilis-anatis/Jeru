@@ -3,6 +3,7 @@
 #include "../vector/vector.h"
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #define SET_ERROR(msg) \
     { \
@@ -42,7 +43,7 @@ JeruBlock parse_block(bool *eof_error, JeruBlock *scope) {
 
 bool jeru_exec(JeruVM *vm, JeruBlock *scope) {
     while (scope->instruct < vector_size(scope->tokens))
-        if (!run_next_token(vm, scope))
+        if (!run_next_token(vm, scope, false))
             return false;
     return true;
 }
@@ -57,11 +58,11 @@ bool jeru_exec(JeruVM *vm, JeruBlock *scope) {
                  *y_ptr = get_back(vm);\
         if (promote(x_ptr, y_ptr, Normal) == ToFloat) { \
             double x = x_ptr->as.floating, y = y_ptr->as.floating; \
-            delete_back(vm); delete_back(vm); \
+            if (!nopop) {delete_back(vm); delete_back(vm);} \
             floatcode \
         } else { \
             long long x = x_ptr->as.integer, y = y_ptr->as.integer; \
-            delete_back(vm); delete_back(vm); \
+            if (!nopop) {delete_back(vm); delete_back(vm);} \
             intcode \
         } \
         break; \
@@ -73,10 +74,14 @@ typedef enum {ToFloat, ToInt, Normal} TypePromo;
 void morph_type(JeruType *item, TypePromo type) {
     switch (type) {
         case ToFloat:
+            if (item->id == TYPE_DOUBLE)
+                break;
             item->id = TYPE_DOUBLE;
             item->as.floating = (double)item->as.integer;
             break;
         case ToInt:
+            if (item->id == TYPE_INT)
+                break;
             item->id = TYPE_INT;
             item->as.integer = (long long)item->as.floating;
             break;
@@ -110,7 +115,7 @@ void concat_jeru_strings(JeruType *string1, JeruType *string2) {
     strcat(string1->as.string, string2->as.string);
 }
 
-bool run_next_token(JeruVM *vm, JeruBlock *scope) {
+bool run_next_token(JeruVM *vm, JeruBlock *scope, bool nopop) {
     Token token = next_token(scope);
     if (token.id == SIG_EOF) {
         return vm->error.exists = false;
@@ -137,10 +142,25 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
             push_data(vm, jeru_type_double(strtod(token.lexeme.string, NULL)));
             break;
 
+        case TOK_NOPOP:
+            return run_next_token(vm, scope, true);
+
         case TOK_PRINT:
             if (!vector_size(vm->stack))
                 SET_ERROR(STACK_MSG "printing");
             print_jeru_type(get_back(vm));
+            break;
+
+        case TOK_STACKLOG:
+            print_stack(vm);
+            break;
+
+        case TOK_SWAPTOP:
+            if (vector_size(vm->stack) < 2)
+                SET_ERROR(STACK_MSG "swapping");
+            JeruType tmp = *get_back(vm);
+            vm->stack[vector_size(vm->stack)-1] = *get_back_from(vm, 1);
+            vm->stack[vector_size(vm->stack)-2] = tmp;
             break;
 
         case TOK_POP:
@@ -216,7 +236,50 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
             TYPELESS_NUMOP("greater than operation",
                 push_data(vm, jeru_type_int(x > y ? 1 : 0));
             )
+        case TOK_LTE:
+            TYPELESS_NUMOP("less-equal to operation",
+                push_data(vm, jeru_type_int(x <= y ? 1 : 0));
+            )
+        case TOK_GTE:
+            TYPELESS_NUMOP("greater-equal to operation",
+                push_data(vm, jeru_type_int(x >= y ? 1 : 0));
+            )
+        case TOK_EQUALS:
+            if (vector_size(vm->stack) < 2)
+                SET_ERROR(STACK_MSG "equality test")
+            JeruType *x = get_back(vm), *y = get_back_from(vm, 1);
+            bool result = false;
+            if (x->id == TYPE_STRING && y->id == TYPE_STRING)
+                result = strcmp(x->as.string, y->as.string) == 0;
+            else if (((x->id & TYPE_NUM) != 0) && ((y->id & TYPE_NUM) != 0))
+                if (promote(x, y, Normal) == ToFloat)
+                    result = x->as.floating == y->as.floating;
+                else
+                    result = x->as.integer == y->as.integer;
+            if (!nopop) {
+                delete_back(vm);
+                delete_back(vm);
+            }
+            push_data(vm, jeru_type_int(result));
+            break;
 
+        case TOK_FLOOR:
+            if (!vector_size(vm->stack))
+                SET_ERROR(STACK_MSG "floor operation");
+            if (!(get_back(vm)->id == TYPE_DOUBLE))
+                SET_ERROR("Floor only works on floats");
+            get_back(vm)->as.integer = (long long)get_back(vm)->as.floating;
+            get_back(vm)->id = TYPE_INT;
+            break;
+
+        case TOK_CEIL:
+            if (!vector_size(vm->stack))
+                SET_ERROR(STACK_MSG "floor operation");
+            if (!stack_has_types(vm, jeru_id_list(1, TYPE_DOUBLE)))
+                SET_ERROR("Ceil only works on floats");
+            get_back(vm)->as.integer = ceil(get_back(vm)->as.floating);
+            get_back(vm)->id = TYPE_INT;
+            break;
 
         // Everything below this point is based around code blocks
 
@@ -355,7 +418,7 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope) {
             JeruBlock *block = ht_get(vm->words, token.lexeme.string, token.lexeme.length);
             if (block == NULL)
                 SET_ERROR("Unrecognized word");
-            
+
             JeruBlock tmp = copy_jeru_block(block);
             tmp.instruct = 0;
             if (!jeru_exec(vm, &tmp))
