@@ -103,7 +103,7 @@ Token parse_word() {
     // Parses 2+ length keywords
     switch (*scanner.start) {
         case 'p':
-            if (start_offset(1) == 'o') 
+            if (start_offset(1) == 'o')
                 return make_token(matches("op", 2, TOK_POP));
             return make_token(matches("rint", 4, TOK_PRINT));
         case 'e':
@@ -147,7 +147,7 @@ bool parse_out_comment() {
     do
         advance();
     while (current() != '#' && !scanner_at_end());
-    
+
     if (scanner_at_end())
         return false;
 
@@ -155,7 +155,7 @@ bool parse_out_comment() {
     return true;
 }
 
-Token parse_string() {
+Token parse_string(void) {
     char last = '\0';
     do
         last = advance();
@@ -163,6 +163,18 @@ Token parse_string() {
 
     if (scanner_at_end())
         return make_signal(SIG_ERR, "string not terminated");
+
+    // Stupid 0 character edge case
+    if (scanner.end == scanner.start+1) {
+        char *string = malloc(1);
+        *string = '\0';
+        Token tok;
+        tok.id = TOK_STRING;
+        tok.lexeme.string = string;
+        tok.lexeme.length = 0;
+        scanner.start = ++scanner.end;
+        return tok;
+    }
 
     /* this entire next section parses out escape codes */
     size_t size = (size_t)((--scanner.end) - (++scanner.start));
@@ -223,7 +235,7 @@ Token next_token(JeruBlock *scope) {
     }
 
     while (isspace(current())) {
-        if (*scanner.start == '\n') 
+        if (*scanner.start == '\n')
             ++scanner.line;
         scanner.start = ++scanner.end;
     }

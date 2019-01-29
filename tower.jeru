@@ -1,0 +1,16 @@
+#!/usr/bin/jeru
+#
+
+[
+    "*" *
+] word stars
+
+[
+    ""
+    [
+        stars "\n" + +
+        copy 1 -
+    ] while
+] word triangle
+
+5 triangle
