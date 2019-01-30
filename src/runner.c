@@ -409,13 +409,15 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope, bool nopop) {
             JeruBlock *block = malloc(sizeof(JeruBlock));
             JeruBlock tmp = copy_jeru_block(get_block(vm));
             memcpy(block, &tmp, sizeof(JeruBlock));
-            ht_insert(vm->words, word.lexeme.string, word.lexeme.length, block);
+            ht_insert(vm->words, word.lexeme.string, word.lexeme.length, block,
+                      sizeof(JeruBlock));
             delete_block(vm);
             return true;
         }
 
         case TOK_WORD_CALL: {
-            JeruBlock *block = ht_get(vm->words, token.lexeme.string, token.lexeme.length);
+            JeruBlock *block = ht_get(vm->words, token.lexeme.string, token.lexeme.length,
+                                      NULL);
             if (block == NULL)
                 SET_ERROR("Unrecognized word");
 

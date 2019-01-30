@@ -10,7 +10,7 @@ JeruVM *init_vm(void) {
     vm->error.exists = false;
     vm->words = malloc(sizeof(hash_table));
     // Not sure what best load factor is
-    ht_init(vm->words, 0.3);
+    ht_init(vm->words, 0, 0.3);
     return vm;
 }
 

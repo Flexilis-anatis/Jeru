@@ -42,6 +42,19 @@ JeruType copy_jeru_type(JeruType *source) {
     return new;
 }
 
+JeruType *alloc_jeru_copy(JeruType *source) {
+    JeruType *new = malloc(sizeof(JeruType));
+    new->id = source->id;
+    if (source->id == TYPE_STRING) {
+        new->as.string = malloc(strlen(source->as.string) + 1);
+        strcpy(new->as.string, source->as.string);
+    } else {
+        // Just to copy the bits over
+        new->as.floating = source->as.floating;
+    }
+    return new;
+}
+
 void print_jeru_type(JeruType *object) {
     switch (object->id) {
         case TYPE_DOUBLE:

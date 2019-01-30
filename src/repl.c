@@ -53,7 +53,7 @@ void run_repl() {
         }
 
         hash_table *word_copy = malloc(sizeof(hash_table));
-        hash_table tmp = ht_copy(vm->words);
+        hash_table tmp = ht_copy(vm->words, sizeof(JeruType), alloc_jeru_copy);
         memcpy(word_copy, &tmp, sizeof(hash_table));
 
         if (*input == '?') {

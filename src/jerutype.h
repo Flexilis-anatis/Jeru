@@ -34,6 +34,7 @@ bool jeru_true(JeruType *object);
 void free_jeru_type(JeruType *object);
 
 JeruType copy_jeru_type(JeruType *source);
+JeruType *alloc_jeru_copy(JeruType *source);
 
 void print_jeru_type(JeruType *object);
 // For stack output. Prints all types. Translates newlines -> \n, etc.
