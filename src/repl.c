@@ -9,6 +9,10 @@
 
 #define VECTOR_BOILER_SIZE (sizeof(size_t) * 2)
 
+void *alloc_jeru_copy_voidp(void *p) {
+    return (void *)alloc_jeru_copy((JeruType *)p);
+}
+
 void run_repl() {
     printf("Welcome to the Jeru REPL");
     bool first_iter = true;
@@ -53,7 +57,7 @@ void run_repl() {
         }
 
         hash_table *word_copy = malloc(sizeof(hash_table));
-        hash_table tmp = ht_copy(vm->words, sizeof(JeruType), alloc_jeru_copy);
+        hash_table tmp = ht_copy(vm->words, sizeof(JeruType), alloc_jeru_copy_voidp);
         memcpy(word_copy, &tmp, sizeof(hash_table));
 
         if (*input == '?') {
@@ -90,6 +94,7 @@ void run_repl() {
             vector_free(stack_copy);
             vector_free(call_stack_copy);
             ht_destroy(word_copy);
+            free(word_copy);
         }
 
         print_stack(vm);

@@ -36,9 +36,15 @@ JeruBlock parse_block(bool *eof_error, JeruBlock *scope) {
         vector_push_back(tok_list, token);
     }
 
-    vector_pop_back(tok_list); // get rid of final ]
+    // get rid of final ]
+    free(tok_list[vector_size(tok_list)-1].lexeme.string);
+    vector_pop_back(tok_list); 
+
+    // copy and return
     JeruBlock block = init_jeru_block(tok_list);
-    return copy_jeru_block(&block);
+    JeruBlock safeblock = copy_jeru_block(&block);
+    free_jeru_block(&block);
+    return safeblock;
 }
 
 bool jeru_exec(JeruVM *vm, JeruBlock *scope) {
@@ -84,6 +90,8 @@ void morph_type(JeruType *item, TypePromo type) {
                 break;
             item->id = TYPE_INT;
             item->as.integer = (long long)item->as.floating;
+            break;
+        case Normal:
             break;
     }
 }
@@ -249,13 +257,15 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope, bool nopop) {
                 SET_ERROR(STACK_MSG "equality test")
             JeruType *x = get_back(vm), *y = get_back_from(vm, 1);
             bool result = false;
-            if (x->id == TYPE_STRING && y->id == TYPE_STRING)
+            if (x->id == TYPE_STRING && y->id == TYPE_STRING) {
                 result = strcmp(x->as.string, y->as.string) == 0;
-            else if (((x->id & TYPE_NUM) != 0) && ((y->id & TYPE_NUM) != 0))
-                if (promote(x, y, Normal) == ToFloat)
+            } else if (((x->id & TYPE_NUM) != 0) && ((y->id & TYPE_NUM) != 0)) {
+                if (promote(x, y, Normal) == ToFloat) {
                     result = x->as.floating == y->as.floating;
-                else
+                } else {
                     result = x->as.integer == y->as.integer;
+                }
+            }
             if (!nopop) {
                 delete_back(vm);
                 delete_back(vm);
@@ -309,7 +319,7 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope, bool nopop) {
             if (!jeru_exec(vm, &block))
                 return false;
 
-            free_jeru_block(block);
+            free_jeru_block(&block);
 
             break;
         }
@@ -333,7 +343,7 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope, bool nopop) {
             } else {
                 delete_back(vm);
             }
-            free_jeru_block(block);
+            free_jeru_block(&block);
             break;
         }
 
@@ -352,30 +362,28 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope, bool nopop) {
             if (jeru_true(cond)) {
                 delete_back(vm);
                 if (!jeru_exec(vm, &block_true)) {
-                    free_jeru_block(block_false);
-                    free_jeru_block(block_true);
+                    free_jeru_block(&block_false);
+                    free_jeru_block(&block_true);
                     return false;
                 }
             } else {
                 delete_back(vm);
                 if (!jeru_exec(vm, &block_false)) {
-                    free_jeru_block(block_false);
-                    free_jeru_block(block_true);
+                    free_jeru_block(&block_false);
+                    free_jeru_block(&block_true);
                     return false;
                 }
             }
 
-            free_jeru_block(block_false);
-            free_jeru_block(block_true);
+            free_jeru_block(&block_false);
+            free_jeru_block(&block_true);
 
             break;
         }
 
         case TOK_WHILE: {
             if (!vector_size(vm->call_stack))
-                SET_ERROR("Nothing to execute in if statement");
-            if (!vector_size(vm->stack))
-                SET_ERROR(STACK_MSG "if statement");
+                SET_ERROR("Nothing to execute in while statement");
 
             JeruBlock block = pop_block(vm);
             JeruType *cond = NULL;
@@ -385,7 +393,7 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope, bool nopop) {
                     delete_back(vm);
                 block.instruct = 0;
                 if (!jeru_exec(vm, &block)) {
-                    free_jeru_block(block);
+                    free_jeru_block(&block);
                     return false;
                 }
                 if (!stack_has_types(vm, jeru_id_list(1, TYPE_BOOL)))
@@ -394,25 +402,27 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope, bool nopop) {
             } while (jeru_true(cond));
 
             delete_back(vm);
-            free_jeru_block(block);
+            free_jeru_block(&block);
 
             break;
         }
 
         case TOK_WORD: {
+            // free the 'word' lexeme
+            if (!scope)
+                free(token.lexeme.string);
+
             if (!vector_size(vm->call_stack))
                 SET_ERROR("No code block to pop into word");
-            Token word = next_token(scope);
-            if (word.id != TOK_WORD_CALL)
+            token = next_token(scope);
+            if (token.id != TOK_WORD_CALL)
                 SET_ERROR("No word name after 'word' keyword");
 
-            JeruBlock *block = malloc(sizeof(JeruBlock));
             JeruBlock tmp = copy_jeru_block(get_block(vm));
-            memcpy(block, &tmp, sizeof(JeruBlock));
-            ht_insert(vm->words, word.lexeme.string, word.lexeme.length, block,
+            ht_insert(vm->words, token.lexeme.string, token.lexeme.length, &tmp,
                       sizeof(JeruBlock));
             delete_block(vm);
-            return true;
+            break;
         }
 
         case TOK_WORD_CALL: {
@@ -422,13 +432,15 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope, bool nopop) {
                 SET_ERROR("Unrecognized word");
 
             JeruBlock tmp = copy_jeru_block(block);
-            tmp.instruct = 0;
-            if (!jeru_exec(vm, &tmp))
+            if (!jeru_exec(vm, &tmp)) {
+                free_jeru_block(&tmp);
                 return false;
-            free_jeru_block(tmp);
+            }
+            free_jeru_block(&tmp);
 
             break;
         }
+        default: break; // shut up -Wswitch
     }
 
     if (!scope)

@@ -66,6 +66,7 @@ void print_jeru_type(JeruType *object) {
         case TYPE_STRING:
             printf("%s", object->as.string);
             break;
+        default: break;
     }
 }
 

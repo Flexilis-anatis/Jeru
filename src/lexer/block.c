@@ -13,7 +13,7 @@ JeruBlock init_jeru_block(Token *tokens) {
 JeruBlock copy_jeru_block(JeruBlock *source) {
     size_t size = vector_capacity(source->tokens) * sizeof(Token);
     Token *copied_list = malloc(size + sizeof(size_t) * 2);
-
+    
     // Copy size & capacity
     memcpy(copied_list, &((size_t *)source->tokens)[-2], sizeof(size_t) * 2);
     copied_list = (Token *)&((size_t *)copied_list)[2];
@@ -29,8 +29,8 @@ JeruBlock copy_jeru_block(JeruBlock *source) {
     return init_jeru_block(copied_list);
 }
 
-void free_jeru_block(JeruBlock block) {
-    for (size_t item = 0; item < vector_size(block.tokens); ++item)
-        free(block.tokens[item].lexeme.string);
-    vector_free(block.tokens);
+void free_jeru_block(JeruBlock *block) {
+    for (size_t item = 0; item < vector_size(block->tokens); ++item)
+        free(block->tokens[item].lexeme.string);
+    vector_free(block->tokens);
 }

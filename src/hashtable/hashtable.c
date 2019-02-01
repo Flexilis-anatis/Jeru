@@ -55,7 +55,7 @@ hash_entry *he_create(int flags, void *key, size_t key_size, void *value,
 /// @brief Destroys the hash entry and frees all associated memory.
 /// @param flags The hash table flags.
 /// @param hash_entry A pointer to the hash entry.
-void he_destroy(int flags, hash_entry *entry);
+void he_destroy(int flags, hash_entry *entry, void (*free_func)(void *));
 
 /// @brief Compare two hash entries.
 /// @param e1 A pointer to the first entry.
@@ -107,7 +107,7 @@ hash_table ht_copy(hash_table *source, size_t value_size, void *(*copy_func)(voi
 // HashTable functions
 //-----------------------------------
 
-void ht_init(hash_table *table, ht_flags flags, double max_load_factor)
+void ht_init(hash_table *table, ht_flags flags, double max_load_factor, void (*free_func)(void *))
 {
     table->hashfunc_x86_32  = MurmurHash3_x86_32;
     table->hashfunc_x86_128 = MurmurHash3_x86_128;
@@ -121,6 +121,8 @@ void ht_init(hash_table *table, ht_flags flags, double max_load_factor)
     table->flags                = flags;
     table->max_load_factor      = max_load_factor;
     table->current_load_factor  = 0.0;
+
+    table->free_func = free_func;
 
     unsigned int i;
     for(i = 0; i < table->array_size; i++)
@@ -143,7 +145,7 @@ void ht_destroy(hash_table *table)
 
         while(entry != NULL) {
             tmp = entry->next;
-            he_destroy(table->flags, entry);
+            he_destroy(table->flags, entry, table->free_func);
             entry = tmp;
         }
     }
@@ -201,7 +203,7 @@ void ht_insert_he(hash_table *table, hash_entry *entry){
         // if the keys are identical, throw away the old entry
         // and stick the new one into the table
         he_set_value(table->flags, tmp, entry->value, entry->value_size);
-        he_destroy(table->flags, entry);
+        he_destroy(table->flags, entry, table->free_func);
     }
     else
     {
@@ -276,7 +278,7 @@ void ht_remove(hash_table *table, void *key, size_t key_size)
             if(prev != NULL)
               table->collisions--;
 
-            he_destroy(table->flags, entry);
+            he_destroy(table->flags, entry, table->free_func);
             return;
         }
         else
@@ -349,7 +351,7 @@ void ht_clear(hash_table *table)
 {
     ht_destroy(table);
 
-    ht_init(table, table->flags, table->max_load_factor);
+    ht_init(table, table->flags, table->max_load_factor, table->free_func);
 }
 
 unsigned int ht_index(hash_table *table, void *key, size_t key_size)
@@ -456,12 +458,14 @@ hash_entry *he_create(int flags, void *key, size_t key_size, void *value,
     return entry;
 }
 
-void he_destroy(int flags, hash_entry *entry)
+void he_destroy(int flags, hash_entry *entry, void (*free_func)(void *))
 {
     if (!(flags & HT_KEY_CONST))
         free(entry->key);
-    if (!(flags & HT_VALUE_CONST))
+    if (!(flags & HT_VALUE_CONST)) {
+        free_func(entry->value);
         free(entry->value);
+    }
     free(entry);
 }
 

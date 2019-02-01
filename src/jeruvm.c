@@ -1,7 +1,12 @@
 #include "jeruvm.h"
+#include "lexer/block.h"
 #define LOGARITHMIC_GROWTH
 #include "../vector/vector.h"
 #include <stdio.h>
+
+void free_jeru_block_voidp(void *p) {
+    free_jeru_block((JeruBlock *)p);
+}
 
 JeruVM *init_vm(void) {
     JeruVM *vm = malloc(sizeof(JeruVM));
@@ -10,7 +15,7 @@ JeruVM *init_vm(void) {
     vm->error.exists = false;
     vm->words = malloc(sizeof(hash_table));
     // Not sure what best load factor is
-    ht_init(vm->words, 0, 0.3);
+    ht_init(vm->words, 0, 0.3, free_jeru_block_voidp);
     return vm;
 }
 
@@ -18,10 +23,11 @@ void free_vm(JeruVM *vm) {
     for (size_t index = 0; index < vector_size(vm->stack); ++index)
         free_jeru_type(&vm->stack[index]);
     for (size_t index = 0; index < vector_size(vm->call_stack); ++index)
-        free_jeru_block(vm->call_stack[index]);
+        free_jeru_block(&vm->call_stack[index]);
     vector_free(vm->call_stack);
     vector_free(vm->stack);
     ht_destroy(vm->words);
+    free(vm->words);
     free(vm);
 }
 
@@ -64,20 +70,22 @@ void push_block(JeruVM *vm, JeruBlock block) {
 }
 
 JeruBlock *get_block(JeruVM *vm) {
+    if (vector_size(vm->call_stack) == 0)
+        return NULL;
     return vector_end(vm->call_stack)-1;
 }
 
-// This one's naive and assumes you know what you're doing
+// This one's naive and assumefree_jeru_block(&tmp);s you know what you're doing
 JeruBlock pop_block(JeruVM *vm) {
     JeruBlock block = copy_jeru_block(get_block(vm));
-    vector_pop_back(vm->call_stack);
+    delete_block(vm);
     return block;
 }
 
 void delete_block(JeruVM *vm) {
     if (vector_size(vm->call_stack) == 0)
         return;
-    free_jeru_block(*get_block(vm));
+    free_jeru_block(get_block(vm));
     vector_pop_back(vm->call_stack);
 }
 
@@ -89,8 +97,10 @@ bool check_type(JeruVM *vm, JeruTypeID expected, size_t index) {
 bool stack_has_types(JeruVM *vm, JeruTypeID *types) {
     size_t index = 0;
     for (;*types;++types,++index) {
-        if (!check_type(vm, *types, index))
+        if (!check_type(vm, *types, index)) {
+            free(types-index);
             return false;
+        }
     }
     free(types-index);
 

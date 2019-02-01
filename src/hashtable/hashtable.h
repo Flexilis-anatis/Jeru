@@ -30,6 +30,9 @@ typedef struct hash_table {
     // hash function for x64_128
     HashFunc *hashfunc_x64_128;
 
+    // the function to call when freeing a value
+    void (*free_func)(void *);
+
     /// The number of keys in the hash table.
     unsigned int key_count;
 
@@ -82,7 +85,7 @@ typedef enum {
 /// @param max_load_factor The ratio of collisions:table_size before an autoresize is triggered
 ///        for example: if max_load_factor = 0.1, the table will resize if the number
 ///        of collisions increases beyond 1/10th of the size of the table
-void ht_init(hash_table *table, ht_flags flags, double max_load_factor);
+void ht_init(hash_table *table, ht_flags flags, double max_load_factor, void (*free_func)(void *));
 
 /// @brief Destroys the hash_table struct and frees all relevant memory.
 /// @param table A pointer to the hash table.
