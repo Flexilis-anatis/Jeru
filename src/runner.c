@@ -292,6 +292,18 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope, bool nopop) {
             get_back(vm)->id = TYPE_INT;
             break;
 
+        case TOK_STORE: {
+            Token reg = next_token(scope);
+
+            if (reg.id != TOK_WORD_CALL)
+                SET_ERROR("Expected register to pop in to");
+
+            JeruType value = copy_jeru_type(get_back(vm));
+            delete_back(vm);
+            ht_insert(vm->registers, reg.lexeme.string, reg.lexeme.length, &value, sizeof(JeruType));
+            break;
+        }
+
         // Everything below this point is based around code blocks
 
         case TOK_BLOCK_START: {
@@ -420,8 +432,7 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope, bool nopop) {
                 SET_ERROR("No word name after 'word' keyword");
 
             JeruBlock tmp = copy_jeru_block(get_block(vm));
-            ht_insert(vm->words, token.lexeme.string, token.lexeme.length, &tmp,
-                      sizeof(JeruBlock));
+            ht_insert(vm->words, token.lexeme.string, token.lexeme.length, &tmp, sizeof(JeruBlock));
             delete_block(vm);
             break;
         }
@@ -429,8 +440,16 @@ bool run_next_token(JeruVM *vm, JeruBlock *scope, bool nopop) {
         case TOK_WORD_CALL: {
             JeruBlock *block = ht_get(vm->words, token.lexeme.string, token.lexeme.length,
                                       NULL);
-            if (block == NULL)
-                SET_ERROR("Unrecognized word");
+            if (block == NULL) {
+                // Search registers
+                JeruType *value = ht_get(vm->registers, token.lexeme.string, token.lexeme.length,
+                                         NULL);
+                if (value == NULL)
+                    SET_ERROR("Unrecognized word");
+
+                push_data(vm, copy_jeru_type(value));
+                break;
+            }
 
             JeruBlock tmp = copy_jeru_block(block);
             if (!jeru_exec(vm, &tmp)) {

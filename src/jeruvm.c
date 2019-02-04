@@ -8,14 +8,20 @@ void free_jeru_block_voidp(void *p) {
     free_jeru_block((JeruBlock *)p);
 }
 
+void free_register_voidp(void *p) {
+    free_jeru_type((JeruType *)p);
+}
+
 JeruVM *init_vm(void) {
     JeruVM *vm = malloc(sizeof(JeruVM));
     vm->stack = NULL;
     vm->call_stack = NULL;
     vm->error.exists = false;
     vm->words = malloc(sizeof(hash_table));
+    vm->registers = malloc(sizeof(hash_table));
     // Not sure what best load factor is
     ht_init(vm->words, 0, 0.3, free_jeru_block_voidp);
+    ht_init(vm->registers, 0, 0.3, free_register_voidp);
     return vm;
 }
 
@@ -28,6 +34,8 @@ void free_vm(JeruVM *vm) {
     vector_free(vm->stack);
     ht_destroy(vm->words);
     free(vm->words);
+    ht_destroy(vm->registers);
+    free(vm->registers);
     free(vm);
 }
 

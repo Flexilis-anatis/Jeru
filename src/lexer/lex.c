@@ -125,7 +125,9 @@ Token parse_word(void) {
         case 'r':
             return make_token(matches("un", 2, TOK_RUN));
         case 's':
-            if (start_offset(1) == 't')
+            if (start_offset(2) == 'o')
+                return make_token(matches("tore", 4, TOK_STORE));
+            else if (start_offset(1) == 't')
                 return make_token(matches("tacklog", 7, TOK_STACKLOG));
             return make_token(matches("waptop", 6, TOK_SWAPTOP));
         case 'n':

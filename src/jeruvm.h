@@ -8,7 +8,7 @@
 typedef struct {
     JeruType *stack;
     JeruBlock *call_stack;
-    hash_table *words;
+    hash_table *words, *registers;
     struct {
         bool exists;
         unsigned long line;
