@@ -43,7 +43,7 @@ JeruBlock parse_block(bool *eof_error, JeruBlock *scope) {
     // copy and return
     JeruBlock block = init_jeru_block(tok_list);
     JeruBlock safeblock = copy_jeru_block(&block);
-    free_jeru_block(&block);
+    if (!scope) free_jeru_block(&block);
     return safeblock;
 }
 
