@@ -37,13 +37,14 @@ JeruBlock parse_block(bool *eof_error, JeruBlock *scope) {
     }
 
     // get rid of final ]
-    free(tok_list[vector_size(tok_list)-1].lexeme.string);
+    if (!scope) free(tok_list[vector_size(tok_list)-1].lexeme.string);
     vector_pop_back(tok_list); 
 
     // copy and return
     JeruBlock block = init_jeru_block(tok_list);
     JeruBlock safeblock = copy_jeru_block(&block);
     if (!scope) free_jeru_block(&block);
+    else vector_free(block.tokens);
     return safeblock;
 }
 
